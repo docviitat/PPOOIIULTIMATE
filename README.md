@@ -1,5 +1,8 @@
 # Laboratorio 4 + Entregas 3 y 4 del proyecto (Spring Boot · MySQL · JPA · Maven)
 
+ mysql -u ppooii -p -e "SELECT login, password, apikey FROM ppooii.usuario;"
+
+ 
 Contiene: **(1)** documentación Swagger/OpenAPI de todos los servicios (Lab 4), **(2)** cargue masivo de personas desde Excel
 (Lab 4 complementario) y **(3)** cargue masivo de trayectos desde Excel con tres procedimientos almacenados (Entrega 4).
 La prueba de concepto RabbitMQ está en el proyecto hermano `rabbitmq-poc`.
