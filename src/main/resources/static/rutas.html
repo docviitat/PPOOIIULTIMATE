@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rutas y trayectos · PPOOII</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{--bg:#f4f6f9;--card:#fff;--ink:#1c2733;--muted:#66758a;--line:#e1e6ee;--brand:#1f4e78;--ok:#1e8e4e;--warn:#b7791f;--bad:#c0392b}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--brand);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  header h1{font-size:18px;margin:0;font-weight:600}
+  header .user{font-size:13px;opacity:.9}
+  main{max-width:1200px;margin:20px auto;padding:0 16px;display:grid;gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+  .card h2{margin:0 0 12px;font-size:15px}
+  form.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px;flex:1;min-width:160px}
+  input{padding:9px 10px;border:1px solid var(--line);border-radius:7px;font-size:14px}
+  input:focus{outline:2px solid #9cc0e6;border-color:#9cc0e6}
+  button{padding:9px 16px;border:0;border-radius:7px;background:var(--brand);color:#fff;font-size:14px;cursor:pointer}
+  button.sec{background:#fff;color:var(--brand);border:1px solid var(--brand)}
+  button:disabled{opacity:.5;cursor:default}
+  .msg{font-size:13px;margin-top:10px;min-height:18px}
+  .msg.err{color:var(--bad)} .msg.ok{color:var(--ok)}
+  .hidden{display:none!important}
+  .grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
+  #map{height:420px;border-radius:8px;border:1px solid var(--line)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{background:#eef3f9;border-radius:999px;padding:4px 12px;font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
+  .num{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;align-items:center;justify-content:center;font-size:12px}
+  .b{display:inline-block;border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600}
+  .b.po{background:#e3f6ea;color:var(--ok)} .b.ea{background:#fff3d6;color:var(--warn)} .b.ro,.b.no{background:#fde4e1;color:var(--bad)} .b.si{background:#e3f6ea;color:var(--ok)}
+  .restr{border-left:4px solid var(--bad);padding:6px 10px;margin:8px 0;background:#fff7f6;border-radius:0 6px 6px 0;font-size:13px}
+  small.hint{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚌 Rutas y trayectos</h1>
+  <div class="user"><span id="quien"></span> <button id="salir" class="sec hidden" style="padding:4px 10px;font-size:12px">Salir</button></div>
+</header>
+
+<main>
+  <section class="card" id="loginCard">
+    <h2>Iniciar sesión</h2>
+    <form class="row" id="loginForm" autocomplete="off">
+      <label>Usuario (login)<input id="usuario" required></label>
+      <label>Contraseña<input id="clave" type="password" required></label>
+      <label>APIKey<input id="apikey" required></label>
+      <button type="submit">Ingresar</button>
+    </form>
+    <div class="msg" id="loginMsg"></div>
+  </section>
+
+  <section class="card hidden" id="buscarCard">
+    <h2>Consultar ruta</h2>
+    <form class="row" id="rutaForm">
+      <label>Código de ruta<input id="codigo" placeholder="Ej. T-001" required></label>
+      <button type="submit">Ver trayectos</button>
+      <button type="button" class="sec" id="btnRestr">Rutas con restricciones</button>
+    </form>
+    <div class="msg" id="rutaMsg"></div>
+  </section>
+
+  <section class="grid2 hidden" id="resultado">
+    <div class="card">
+      <h2 id="titulo">Trayectos</h2>
+      <div class="chips" id="chips"></div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>#</th><th>Ubicación</th><th>Conductor</th><th>Vehículo</th></tr></thead>
+          <tbody id="filas"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Mapa</h2>
+      <div id="map"></div>
+      <small class="hint" id="mapHint"></small>
+    </div>
+  </section>
+
+  <section class="card hidden" id="restrCard">
+    <h2>Rutas con vehículo no habilitado o conductor restringido</h2>
+    <div id="restrLista"></div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  var token = null, map = null, capa = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function show(id, v) { $(id).classList.toggle('hidden', !v); }
+  function msg(id, text, cls) { var e = $(id); e.textContent = text || ''; e.className = 'msg ' + (cls || ''); }
+  function el(tag, text, cls) { var e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
+
+  function api(path, opts) {
+    opts = opts || {}; opts.headers = opts.headers || {};
+    if (token) opts.headers['Authorization'] = token;
+    return fetch(path, opts).then(function (r) {
+      return r.text().then(function (t) {
+        var body = null; try { body = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!r.ok) {
+          if (r.status === 403) { cerrarSesion('La sesión expiró o el token no es válido. Ingrese de nuevo.'); }
+          throw new Error((body && body.error) || (r.status === 403 ? 'Acceso denegado (403).' : 'Error ' + r.status));
+        }
+        return body;
+      });
+    });
+  }
+
+  // ---------- Login ----------
+  $('loginForm').addEventListener('submit', function (ev) {
+    ev.preventDefault(); msg('loginMsg', 'Ingresando…');
+    fetch('/authenticate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'APIkey': $('apikey').value.trim() },
+      body: JSON.stringify({ username: $('usuario').value.trim(), password: $('clave').value })
+    }).then(function (r) {
+      if (!r.ok) throw new Error('Usuario o APIKey incorrectos.');
+      return r.json();
+    }).then(function (j) {
+      token = j.token.indexOf('Bearer ') === 0 ? j.token : 'Bearer ' + j.token;
+      $('quien').textContent = '👤 ' + $('usuario').value.trim();
+      $('clave').value = ''; $('apikey').value = '';
+      show('loginCard', false); show('buscarCard', true); show('salir', true); msg('loginMsg', '');
+      $('codigo').focus();
+    }).catch(function (e) { msg('loginMsg', e.message, 'err'); });
+  });
+
+  function cerrarSesion(texto) {
+    token = null; $('quien').textContent = '';
+    show('salir', false); show('buscarCard', false); show('resultado', false); show('restrCard', false); show('loginCard', true);
+    msg('loginMsg', texto || '', texto ? 'err' : '');
+  }
+  $('salir').addEventListener('click', function () { cerrarSesion(); });
+
+  // ---------- Consulta de una ruta ----------
+  $('rutaForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var codigo = $('codigo').value.trim(); if (!codigo) return;
+    msg('rutaMsg', 'Consultando…'); show('restrCard', false);
+    api('/LaboratorioV3/rutas/' + encodeURIComponent(codigo)).then(function (ruta) {
+      msg('rutaMsg', ''); pintarRuta(ruta);
+    }).catch(function (e) { show('resultado', false); msg('rutaMsg', e.message, 'err'); });
+  });
+
+  function badge(texto, cls) { return el('span', texto, 'b ' + cls); }
+
+  function pintarRuta(ruta) {
+    show('resultado', true);
+    $('titulo').textContent = 'Ruta ' + ruta.codigoRuta;
+    var chips = $('chips'); chips.textContent = '';
+    var conductores = {}, placas = {}, conCoord = 0;
+    ruta.trayectos.forEach(function (t) {
+      conductores[t.identificacionConductor] = 1; placas[t.placa] = 1;
+      if (t.latitud !== null && t.longitud !== null) conCoord++;
+    });
+    chips.appendChild(el('span', ruta.totalTrayectos + ' trayecto(s)', 'chip'));
+    chips.appendChild(el('span', Object.keys(conductores).length + ' conductor(es)', 'chip'));
+    chips.appendChild(el('span', Object.keys(placas).length + ' vehículo(s)', 'chip'));
+
+    var tb = $('filas'); tb.textContent = '';
+    ruta.trayectos.forEach(function (t) {
+      var tr = el('tr');
+      var c1 = el('td'); c1.appendChild(el('span', t.orden, 'num')); tr.appendChild(c1);
+      tr.appendChild(el('td', t.ubicacion));
+      var c3 = el('td'); c3.appendChild(el('div', t.nombreConductor || '(sin nombre)'));
+      c3.appendChild(el('small', 'ID ' + t.identificacionConductor + ' ', 'hint'));
+      var est = t.estadoConductor;
+      c3.appendChild(badge(est ? est : 'Sin relación', est === 'PO' ? 'po' : est === 'EA' ? 'ea' : 'ro'));
+      tr.appendChild(c3);
+      var c4 = el('td'); c4.appendChild(el('div', t.placa));
+      c4.appendChild(badge(t.vehiculoHabilitado ? 'Habilitado' : 'No habilitado', t.vehiculoHabilitado ? 'si' : 'no'));
+      tr.appendChild(c4);
+      tb.appendChild(tr);
+    });
+    pintarMapa(ruta.trayectos, conCoord);
+  }
+
+  function pintarMapa(trayectos, conCoord) {
+    if (typeof L === 'undefined') { $('map').textContent = 'No se pudo cargar el mapa (sin conexión a la librería Leaflet).'; return; }
+    if (!map) {
+      map = L.map('map');
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+    }
+    if (capa) { map.removeLayer(capa); }
+    capa = L.layerGroup().addTo(map);
+    var pts = [];
+    trayectos.forEach(function (t) {
+      if (t.latitud === null || t.longitud === null) return;
+      var p = [t.latitud, t.longitud]; pts.push(p);
+      var icon = L.divIcon({ className: '', html: '<span class="num">' + t.orden + '</span>', iconSize: [24, 24], iconAnchor: [12, 12] });
+      var m = L.marker(p, { icon: icon }).addTo(capa);
+      var pop = document.createElement('div'); pop.textContent = t.orden + '. ' + t.ubicacion; m.bindPopup(pop);
+    });
+    if (pts.length > 1) L.polyline(pts, { color: '#1f4e78', weight: 3, opacity: .7 }).addTo(capa);
+    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.2)); else map.setView([4.4389, -75.2322], 12);
+    $('mapHint').textContent = pts.length === trayectos.length ? '' :
+      (trayectos.length - pts.length) + ' trayecto(s) aún sin coordenadas: una tarea programada las completa con Google Maps cada 90 segundos.';
+    setTimeout(function () { map.invalidateSize(); }, 50);
+  }
+
+  // ---------- Rutas con restricciones ----------
+  $('btnRestr').addEventListener('click', function () {
+    msg('rutaMsg', 'Consultando…'); show('resultado', false);
+    api('/LaboratorioV3/rutas/restricciones').then(function (rutas) {
+      msg('rutaMsg', ''); var cont = $('restrLista'); cont.textContent = '';
+      if (!rutas.length) cont.appendChild(el('p', 'No hay rutas con restricciones. ✅'));
+      rutas.forEach(function (r) {
+        cont.appendChild(el('h3', 'Ruta ' + r.codigoRuta, ''));
+        r.trayectos.forEach(function (t) {
+          cont.appendChild(el('div', t.orden + '. ' + t.ubicacion + ' — ' + t.placa + ' / ' + t.identificacionConductor + ' → ' + t.motivo, 'restr'));
+        });
+      });
+      show('restrCard', true);
+    }).catch(function (e) { msg('rutaMsg', e.message, 'err'); });
+  });
+})();
+</script>
+</body>
+</html>

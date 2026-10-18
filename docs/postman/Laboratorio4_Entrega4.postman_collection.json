@@ -1,0 +1,667 @@
+{
+  "info": {
+    "name": "Laboratorio4 - Entregas 3 y 4",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base",
+      "value": "http://localhost:9001"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "idCargue",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authenticate (JWT)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "APIkey",
+            "value": "TU_APIKEY"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/authenticate"
+        },
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"username\":\"TU_LOGIN\",\"password\":\"TU_PASSWORD\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "var t = pm.response.json().token; pm.collectionVariables.set('token', t);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Cargue personas Excel (Lab4 complementario, sin token)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV3/upload-excel"
+        },
+        "auth": {
+          "type": "noauth"
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "docs/plantillas/Datos_Cargue_Personas_Lab4.xlsx"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Descargar plantilla de trayectos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV4/trayectos/plantilla"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Cargue de trayectos Excel",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV4/trayectos/cargue"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "docs/plantillas/Ejemplo_Cargue_Trayectos.xlsx"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set('idCargue', pm.response.json().idCargue);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Consultar cargue por idCargue",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV4/trayectos/cargue/{{idCargue}}?page=0&size=50"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Swagger JSON (sin token)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/api-docs"
+        },
+        "auth": {
+          "type": "noauth"
+        }
+      }
+    },
+    {
+      "name": "7. [E3] Ruta por código",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV3/rutas/T-001"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "8. [E3] Rutas de un conductor (identificación)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV3/rutas/conductor/9001"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "9. [E3] Rutas de un vehículo (placa)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV3/rutas/vehiculo/TST001"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "10. [E3] Rutas con vehículo no habilitado / conductor RO",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base}}/LaboratorioV3/rutas/restricciones"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "11. [E3] Crear trayecto (condicionado a documentos y PO)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/LaboratorioV3/trayectos"
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"codigoRuta\":\"R-050\",\"orden\":1,\"ubicacion\":\"Parque Murillo Toro, Ibagué, Tolima\",\"identificacionConductor\":\"9001\",\"placa\":\"TST001\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Entrega 1 - Vehiculos y documentos (token)",
+      "item": [
+        {
+          "name": "[E1] Crear documento",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/documento"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"codigoDocumento\": \"RC\",\n  \"nombreDocumento\": \"Responsabilidad Civil\",\n  \"tiposVehiculo\": \"AM\",\n  \"obligatoriedad\": \"RR\",\n  \"descripcion\": \"Poliza\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[E1] Listar documentos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/documentos"
+            }
+          }
+        },
+        {
+          "name": "[E1] Crear vehiculo (con documento)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculo"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipoVehiculo\": \"Automovil\",\n  \"placa\": \"NEW123\",\n  \"tipoServicio\": \"A\",\n  \"tipoCombustible\": \"Gasolina\",\n  \"capacidadPasajeros\": 4,\n  \"color\": \"Gris\",\n  \"modelo\": 2024,\n  \"marca\": \"Kia\",\n  \"linea\": \"Rio\",\n  \"documentos\": [\n    {\n      \"codigoDocumento\": \"SOAT\",\n      \"numeroDocumento\": \"SOAT-9\",\n      \"fechaExpedicion\": \"2026-01-01\",\n      \"fechaVencimiento\": \"2027-01-01\"\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "[E1] Listar vehiculos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculos"
+            }
+          }
+        },
+        {
+          "name": "[E1] Vehiculo por placa",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculo/placa/ABC123"
+            }
+          }
+        },
+        {
+          "name": "[E1] Vehiculos por tipo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculos/tipo/Automovil"
+            }
+          }
+        },
+        {
+          "name": "[E1] Vehiculos con documento SOAT",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculos/documento/SOAT"
+            }
+          }
+        },
+        {
+          "name": "[E1] Vehiculos por estado de documento",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculos/estado-documento/Habilitado"
+            }
+          }
+        },
+        {
+          "name": "[E1] Agregar documentos a vehiculo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/vehiculo/1/documentos"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"codigoDocumento\": \"RC\",\n    \"numeroDocumento\": \"RC-1\",\n    \"fechaExpedicion\": \"2026-01-01\",\n    \"fechaVencimiento\": \"2027-01-01\"\n  }\n]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Entrega 2 - Usuarios, conductores y publicos",
+      "item": [
+        {
+          "name": "[E2] Crear persona ADMINISTRATIVO (genera usuario)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/persona"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identificacion\": \"5001\",\n  \"tipoIdentificacion\": \"CC\",\n  \"nombres\": \"Ana Maria\",\n  \"apellidos\": \"Torres\",\n  \"correo\": \"ana@example.com\",\n  \"tipoPersona\": \"ADMINISTRATIVO\",\n  \"edad\": 30,\n  \"ubicacion\": \"Ibague\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[E2] Crear persona CONDUCTOR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV1/persona"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identificacion\": \"5002\",\n  \"tipoIdentificacion\": \"CC\",\n  \"nombres\": \"Luis\",\n  \"apellidos\": \"Diaz\",\n  \"correo\": \"luis@example.com\",\n  \"tipoPersona\": \"CONDUCTOR\",\n  \"fechaLicencia\": \"2030-01-01\",\n  \"licencia\": \"JVBERi0xLjQ=\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[E2] Cambiar password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/usuarios/jperez/password"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"NuevaClave123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[E2] Regenerar APIKey",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/usuarios/jperez/apikey"
+            }
+          }
+        },
+        {
+          "name": "[E2] Cargar documentos PDF (Base64)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/vehiculos/ABC123/documentos"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"codigoDocumento\": \"SOAT\",\n    \"numeroDocumento\": \"SOAT-0001\",\n    \"fechaExpedicion\": \"2026-01-01\",\n    \"fechaVencimiento\": \"2027-01-01\",\n    \"archivoBase64\": \"JVBERi0xLjQ=\"\n  }\n]"
+            }
+          }
+        },
+        {
+          "name": "[E2] Asociar vehiculos a conductor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/conductores/5002/vehiculos"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"placas\": [\n    \"ABC123\",\n    \"TST001\"\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "[E2] Cambiar estado conductor-vehiculo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/conductores/5002/vehiculos/ABC123/estado"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"PO\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[E2 publico] Vehiculos con documentos vencidos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/publico/vehiculos/documentos-vencidos"
+            }
+          }
+        },
+        {
+          "name": "[E2 publico] Conductores que pueden operar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/publico/conductores/pueden-operar"
+            }
+          }
+        },
+        {
+          "name": "[E2 publico] Vehiculo por placa con conductores y documentos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/publico/vehiculos/placa/TST001"
+            }
+          }
+        },
+        {
+          "name": "[E2 publico] Documentos por vencer (dias)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/publico/vehiculos/documentos-por-vencer?dias=30"
+            }
+          }
+        },
+        {
+          "name": "[E2 publico] Total personas por tipo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/publico/personas/total-por-tipo"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
