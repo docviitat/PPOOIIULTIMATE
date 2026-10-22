@@ -17,9 +17,24 @@ public class ApiExceptionHandler {
 		return ResponseEntity.status(e.getStatus()).body(new ErrorDTO(e.getStatus().value(), e.getMessage()));
 	}
 
-	@ExceptionHandler({ MissingServletRequestPartException.class, MissingServletRequestParameterException.class })
-	public ResponseEntity<ErrorDTO> parametroFaltante(Exception e) {
-		return ResponseEntity.badRequest().body(new ErrorDTO(400, "Debe enviar el archivo Excel en el campo 'file' (multipart/form-data)."));
+	@ExceptionHandler(MissingServletRequestPartException.class)
+	public ResponseEntity<ErrorDTO> archivoFaltante(MissingServletRequestPartException e) {
+		return ResponseEntity.badRequest().body(new ErrorDTO(400, "Debe enviar el campo '" + e.getRequestPartName() + "' (multipart/form-data)."));
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ErrorDTO> parametroFaltante(MissingServletRequestParameterException e) {
+		return ResponseEntity.badRequest().body(new ErrorDTO(400, "El parámetro '" + e.getParameterName() + "' es obligatorio."));
+	}
+
+	@ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+	public ResponseEntity<ErrorDTO> headerFaltante(org.springframework.web.bind.MissingRequestHeaderException e) {
+		return ResponseEntity.badRequest().body(new ErrorDTO(400, "El encabezado '" + e.getHeaderName() + "' es obligatorio."));
+	}
+
+	@ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<ErrorDTO> formatoParametro(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException e) {
+		return ResponseEntity.badRequest().body(new ErrorDTO(400, "El parámetro '" + e.getName() + "' tiene un formato incorrecto."));
 	}
 
 	@ExceptionHandler(MaxUploadSizeExceededException.class)

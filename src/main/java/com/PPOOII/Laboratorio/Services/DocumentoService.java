@@ -38,6 +38,9 @@ public class DocumentoService {
 		if (otro != null && !otro.idDocumento.equals(d.idDocumento)) {
 			throw Validaciones.error(HttpStatus.CONFLICT, "Ya existe otro documento con el código " + d.codigoDocumento + ".");
 		}
+		if (repo.tieneVehiculosIncompatibles(d.idDocumento, d.tiposVehiculo)) {
+			throw Validaciones.error(HttpStatus.CONFLICT, "El tipo de documento no puede excluir vehículos que ya lo tienen asociado.");
+		}
 		repo.actualizar(d);
 		return repo.porId(d.idDocumento);
 	}

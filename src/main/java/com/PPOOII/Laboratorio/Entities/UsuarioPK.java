@@ -43,4 +43,8 @@ public class UsuarioPK implements Serializable{
 		this.persona = persona;
 	}
 	
+    @Override public boolean equals(Object o) {
+        return o instanceof UsuarioPK p && persona==p.persona && java.util.Objects.equals(login,p.login);
+    }
+    @Override public int hashCode() { return java.util.Objects.hash(login,persona); }
 }

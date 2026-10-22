@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
  * tareas.licencias.ms (2 min), tareas.documentos.ms (2 min) y tareas.coordenadas.ms (90 s).
  */
 @Component
+@org.springframework.boot.autoconfigure.condition.ConditionalOnProperty(name="tareas.enabled",havingValue="true",matchIfMissing=true)
 public class TareasProgramadasEntrega3 {
 
 	private static final Logger logger = LoggerFactory.getLogger(TareasProgramadasEntrega3.class);
@@ -23,7 +24,7 @@ public class TareasProgramadasEntrega3 {
 	@Autowired private GeocodingService geocodingService;
 
 	/** 1.1 Licencias vencidas: el conductor pasa a RO (Restringido para Operar) en su relación con el vehículo. */
-	@Scheduled(fixedDelayString = "${tareas.licencias.ms:120000}", initialDelayString = "${tareas.licencias.ms:120000}")
+	@Scheduled(fixedRateString = "${tareas.licencias.ms:10000}", initialDelayString = "${tareas.licencias.ms:10000}")
 	public void licenciasVencidas() {
 		try {
 			int n = jdbc.update("UPDATE vehiculo_conductor vc JOIN persona p ON p.id = vc.persona_id "
@@ -37,7 +38,7 @@ public class TareasProgramadasEntrega3 {
 	}
 
 	/** 1.2 Documentos con vigencia vencida: el estado del documento asociado al vehículo pasa a Vencido. */
-	@Scheduled(fixedDelayString = "${tareas.documentos.ms:120000}", initialDelayString = "${tareas.documentos.ms:120000}")
+	@Scheduled(fixedRateString = "${tareas.documentos.ms:120000}", initialDelayString = "${tareas.documentos.ms:120000}")
 	public void documentosVencidos() {
 		try {
 			int n = jdbc.update("UPDATE vehiculo_documento SET estado_documento = 'Vencido' "
@@ -48,17 +49,14 @@ public class TareasProgramadasEntrega3 {
 		}
 	}
 
-	/** 1.3 Trayectos sin latitud/longitud: se consultan con Google Maps y se guardan en la base de datos. */
-	@Scheduled(fixedDelayString = "${tareas.coordenadas.ms:90000}", initialDelayString = "${tareas.coordenadas.ms:90000}")
+	/** 1.3 Trayectos sin latitud/longitud: se consultan con Nominatim / OpenStreetMap y se guardan en la base de datos. */
+	@Scheduled(fixedRateString = "${tareas.coordenadas.ms:90000}", initialDelayString = "${tareas.coordenadas.ms:90000}")
 	public void coordenadasTrayectos() {
 		int actualizados = 0;
 		try {
 			List<Map<String, Object>> pendientes = jdbc.queryForList(
-					"SELECT id_trayecto AS ID, ubicacion AS UBICACION FROM trayecto WHERE latitud IS NULL OR longitud IS NULL");
+					"SELECT id_trayecto AS ID, ubicacion AS UBICACION FROM trayecto t WHERE (latitud IS NULL OR longitud IS NULL) AND NOT EXISTS (SELECT 1 FROM geocoding_cache c WHERE c.ubicacion=TRIM(t.ubicacion) AND c.latitud IS NULL AND c.consultado>DATE_SUB(CURRENT_TIMESTAMP,INTERVAL 1 DAY)) ORDER BY id_trayecto LIMIT 4");
 			if (pendientes.isEmpty()) return;
-			if (!geocodingService.usaGoogle()) {
-				logger.warn("[TAREA coordenadas] No hay API Key de Google Maps (google.maps.api-key / GOOGLE_MAPS_API_KEY); se usa Nominatim como respaldo.");
-			}
 			for (Map<String, Object> fila : pendientes) {
 				Number id = (Number) fila.get("ID");
 				String ubicacion = (String) fila.get("UBICACION");
@@ -69,12 +67,7 @@ public class TareasProgramadasEntrega3 {
 				} catch (Exception e) {
 					logger.warn("[TAREA coordenadas] no se obtuvo lat/long del trayecto {} ('{}'): {}", id, ubicacion, e.toString());
 				}
-				try {
-					Thread.sleep(geocodingService.pausaMs());
-				} catch (InterruptedException ie) {
-					Thread.currentThread().interrupt();
-					break;
-				}
+
 			}
 			logger.info("[TAREA coordenadas] {} de {} trayecto(s) actualizados.", actualizados, pendientes.size());
 		} catch (Exception e) {

@@ -53,12 +53,19 @@ public class VehiculoService {
 		if (v == null || v.idVehiculo == null || v.idVehiculo == 0) {
 			throw Validaciones.error(HttpStatus.BAD_REQUEST, "El idVehiculo es obligatorio para actualizar.");
 		}
-		if (repo.porId(v.idVehiculo) == null) throw noExiste(v.idVehiculo);
+		VehiculoDTO actual=repo.porId(v.idVehiculo);
+        if (actual == null) throw noExiste(v.idVehiculo);
 		validar(v);
 		VehiculoDTO otro = repo.porPlaca(v.placa);
 		if (otro != null && !otro.idVehiculo.equals(v.idVehiculo)) {
 			throw Validaciones.error(HttpStatus.CONFLICT, "Ya existe otro vehículo con la placa " + v.placa + ".");
 		}
+        String letra="Automovil".equals(v.tipoVehiculo)?"A":"M";
+        for (DocumentoVehiculoDTO documento:actual.documentos) {
+            DocumentoDTO param=docRepo.porId(documento.idDocumento);
+            if (!"AM".equals(param.tiposVehiculo) && !letra.equals(param.tiposVehiculo))
+                throw Validaciones.error(HttpStatus.CONFLICT,"El nuevo tipo de vehículo es incompatible con sus documentos asociados.");
+        }
 		repo.actualizar(v);
 		return repo.porId(v.idVehiculo);
 	}
@@ -125,6 +132,24 @@ public class VehiculoService {
 		VehiculoDTO v = buscarPorPlaca(placa);
 		guardarDocumentos(v.idVehiculo, v.tipoVehiculo, docs, true, true);
 		return repo.porId(v.idVehiculo);
+	}
+
+	/** Permite resolver la verificación sin editar directamente la base de datos. */
+	@Transactional
+	public VehiculoDTO cambiarEstadoDocumento(String placa, int idDocumento, String estado) {
+		String canonico = Validaciones.canon(estado, ESTADOS_DOC);
+		if (canonico == null) throw Validaciones.error(HttpStatus.BAD_REQUEST,
+				"El estado debe ser Habilitado, Vencido o En Verificacion.");
+		VehiculoDTO vehiculo = buscarPorPlaca(placa);
+		DocumentoVehiculoDTO documento = vehiculo.documentos.stream()
+				.filter(d -> Integer.valueOf(idDocumento).equals(d.idDocumento)).findFirst()
+				.orElseThrow(() -> Validaciones.error(HttpStatus.NOT_FOUND, "El documento no está asociado al vehículo."));
+		if ("Habilitado".equals(canonico) && (documento.fechaVencimiento == null
+				|| documento.fechaVencimiento.isBefore(LocalDate.now()))) {
+			throw Validaciones.error(HttpStatus.CONFLICT, "No se puede habilitar un documento vencido o sin fecha de vencimiento.");
+		}
+		repo.cambiarEstadoDocumento(documento.id, canonico);
+		return repo.porId(vehiculo.idVehiculo);
 	}
 
 	private void guardarDocumentos(int idVehiculo, String tipoVehiculo, List<DocumentoVehiculoDTO> docs,

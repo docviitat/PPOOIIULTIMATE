@@ -28,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @CrossOrigin
-@Tag(name = "autenticacion", description = "Autenticación: generación del token JWT")
+@Tag(name = "00. Autenticación", description = "Autenticación: generación del token JWT")
 public class JwtAuthenticationController {
 	@Autowired
 	JWTAuthtenticationConfig jwtAuthtenticationConfig;
@@ -39,7 +39,7 @@ public class JwtAuthenticationController {
 	private UsuarioServiceImpl usuarioServiceImp;
 
 	@Operation(summary = "Genera un token JWT para un usuario.",
-			description = "Requiere el login del usuario en el body y su APIKey en el header 'APIkey'. "
+			description = "Requiere username (login) y password en el body y su APIKey en el header 'APIkey'. "
 					+ "Este servicio no requiere token. El token retornado se usa como Bearer en los demás servicios.")
 	@ApiResponses(value = {
 		@ApiResponse(responseCode = "200", description = "Token generado",

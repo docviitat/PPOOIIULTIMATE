@@ -19,6 +19,20 @@ import static com.PPOOII.Laboratorio.Config.Model.Constans.*;
 
 @Component
 public class JWTAuthorizationFilter extends OncePerRequestFilter {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.PPOOII.Laboratorio.Repository.UsuarioRepository usuarios;
+
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		String path = request.getRequestURI().substring(request.getContextPath().length());
+		return "OPTIONS".equals(request.getMethod()) || "/authenticate".equals(path)
+				|| path.startsWith("/LaboratorioV2/publico/")
+				|| "/LaboratorioV3/upload-excel".equals(path)
+				|| "/api-docs".equals(path) || path.startsWith("/api-docs/")
+				|| "/swagger-ui.html".equals(path) || path.startsWith("/swagger-ui/")
+				|| "/rutas.html".equals(path) || "/error".equals(path);
+	}
+
 
 	private Claims setSigningKey(HttpServletRequest request) {
 		String jwtToken = request.
@@ -64,10 +78,20 @@ public class JWTAuthorizationFilter extends OncePerRequestFilter {
 			} else {
 				SecurityContextHolder.clearContext();
 			}
+            String path=request.getRequestURI().substring(request.getContextPath().length());
+            if ((path.startsWith("/LaboratorioV1/vehiculo") || path.startsWith("/LaboratorioV1/documento"))
+                && !"OPTIONS".equals(request.getMethod())) {
+                var auth=SecurityContextHolder.getContext().getAuthentication();
+                if(auth==null || usuarios.findByUsernameANDAPIKey(auth.getName(),request.getHeader("APIkey"))==null) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN,"Token y APIkey del mismo usuario son obligatorios.");
+                    return;
+                }
+            }
 			filterChain.doFilter(request, response);
-		} catch (ExpiredJwtException | UnsupportedJwtException | MalformedJwtException e) {
+		} catch (JwtException | IllegalArgumentException e) {
+			SecurityContextHolder.clearContext();
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-			response.sendError(HttpServletResponse.SC_FORBIDDEN, e.getMessage());
+			response.sendError(HttpServletResponse.SC_FORBIDDEN, "Token inválido o vencido.");
 			return;
 		}
 	}

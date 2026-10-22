@@ -26,4 +26,7 @@ public interface ITrayectoCargueService {
 
 	/** Genera la plantilla Excel (.xlsx) definida para el cargue de trayectos. */
 	byte[] generarPlantilla();
+
+	/** Excel con tres paradas de ejemplo y guía. */
+	byte[] generarEjemplo();
 }

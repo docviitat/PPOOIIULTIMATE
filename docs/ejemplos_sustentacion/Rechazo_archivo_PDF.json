@@ -1,0 +1,9 @@
+[
+  {
+    "codigoDocumento": "DEMODOC",
+    "numeroDocumento": "DEMO-001",
+    "fechaExpedicion": "2026-01-01",
+    "fechaVencimiento": "2030-12-31",
+    "archivoBase64": "SG9sYQ=="
+  }
+]

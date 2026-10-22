@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** Entrega 1: CRUD de la entidad paramétrica de documentos. Requiere token. */
 @RestController
 @RequestMapping("/LaboratorioV1")
-@Tag(name = "documento-controller", description = "CRUD de la entidad paramétrica de documentos (Entrega 1)")
+@Tag(name = "01. Documentos", description = "CRUD de la entidad paramétrica de documentos (Entrega 1)")
 @SecurityRequirement(name = "bearerAuth")
 public class DocumentoController {
 

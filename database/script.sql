@@ -24,19 +24,23 @@ DROP TABLE IF EXISTS vehiculos;
 -- ---------------------------------------------------------------------
 CREATE TABLE persona (
   id BIGINT NOT NULL AUTO_INCREMENT,
-  identificacion VARCHAR(20) NOT NULL,
-  tipo_identificacion VARCHAR(5) NOT NULL CHECK (tipo_identificacion IN ('CC','CE','PAS')),
+  identificacion VARCHAR(20) DEFAULT NULL,
+  tipo_identificacion VARCHAR(5) DEFAULT NULL CHECK (tipo_identificacion IN ('CC','CE','PAS')),
   nombres VARCHAR(100) NOT NULL,
   pnombre VARCHAR(100) DEFAULT NULL,          
-  apellidos VARCHAR(100) NOT NULL,
+  apellidos VARCHAR(100) DEFAULT NULL,
   edad INT DEFAULT NULL,                      
   ubicacion VARCHAR(255) DEFAULT NULL,        
-  correo VARCHAR(100) NOT NULL,
-  tipo_persona VARCHAR(1) NOT NULL CHECK (tipo_persona IN ('C','A')),
+  correo VARCHAR(100) DEFAULT NULL,
+  tipo_persona VARCHAR(1) DEFAULT NULL CHECK (tipo_persona IN ('C','A')),
   licencia_conduccion LONGBLOB DEFAULT NULL,
   fecha_vigencia_licencia DATE DEFAULT NULL,
   PRIMARY KEY (id),
-  UNIQUE KEY identificacion (identificacion)
+  UNIQUE KEY identificacion (identificacion),
+  CONSTRAINT chk_persona_completa CHECK (
+    (tipo_persona IS NULL AND identificacion IS NULL AND tipo_identificacion IS NULL)
+    OR (tipo_persona IS NOT NULL AND identificacion IS NOT NULL AND tipo_identificacion IS NOT NULL
+        AND apellidos IS NOT NULL AND correo IS NOT NULL))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -82,7 +86,8 @@ CREATE TABLE usuario (
   password VARCHAR(100) NOT NULL,
   apikey VARCHAR(100) NOT NULL,
   PRIMARY KEY (login, idpersona),
-  KEY fk_usuario_persona (idpersona),
+  UNIQUE KEY uq_usuario_login (login),
+  UNIQUE KEY fk_usuario_persona (idpersona),
   CONSTRAINT fk_usuario_persona FOREIGN KEY (idpersona) REFERENCES persona (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -101,6 +106,29 @@ CREATE TABLE vehiculo_conductor (
   KEY FKai18v148tmnnl0ivxei0ft5es (vehiculo_id),
   CONSTRAINT FKai18v148tmnnl0ivxei0ft5es FOREIGN KEY (vehiculo_id) REFERENCES vehiculos (id_vehiculo),
   CONSTRAINT FKbndhle29qvq74qkp2pffxfwy9 FOREIGN KEY (persona_id) REFERENCES persona (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------
+-- ENTIDAD TRAYECTO_TMP (Tabla Temporal para Cargue Masivo de Excel)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS trayecto_tmp (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  id_cargue BIGINT NOT NULL,
+  codigo_ruta TEXT DEFAULT NULL,
+  orden TEXT DEFAULT NULL,
+  ubicacion TEXT DEFAULT NULL,
+  identificacion_conductor TEXT DEFAULT NULL,
+  placa TEXT DEFAULT NULL,
+  latitud VARCHAR(50) DEFAULT NULL,
+  longitud VARCHAR(50) DEFAULT NULL,
+  nombre_conductor TEXT DEFAULT NULL,
+  edad_conductor TEXT DEFAULT NULL,
+  login_registro VARCHAR(100) DEFAULT NULL,
+  estado VARCHAR(30) NOT NULL DEFAULT 'CARGADO'
+    CHECK (estado IN ('CARGADO','VALIDADO','PROCESADO','ERROR')),
+  observacion TEXT DEFAULT NULL,
+  PRIMARY KEY (id),
+  KEY idx_trayecto_tmp_cargue (id_cargue)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ---------------------------------------------------------------------
@@ -125,6 +153,15 @@ CREATE TABLE vehiculo_documento (
   CONSTRAINT fk_vd_documento FOREIGN KEY (id_documento) REFERENCES documentos (id_documento)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS coordenadas (
+    id_coordenada BIGINT AUTO_INCREMENT PRIMARY KEY,
+    latitud DOUBLE NOT NULL,
+    longitud DOUBLE NOT NULL,
+    marca VARCHAR(255),
+    persona BIGINT,
+    CONSTRAINT fk_coordenada_persona FOREIGN KEY (persona) REFERENCES persona(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- ---------------------------------------------------------------------
 -- 7. ENTIDAD TRAYECTO (Definitiva)
 -- ---------------------------------------------------------------------
@@ -146,255 +183,123 @@ CREATE TABLE trayecto (
   CONSTRAINT fk_trayecto_vehiculo FOREIGN KEY (id_vehiculo) REFERENCES vehiculos (id_vehiculo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ---------------------------------------------------------------------
--- 8. ENTIDAD TRAYECTO_TMP (Temporal para Entrega 4 - Cargue Masivo)
--- ---------------------------------------------------------------------
-CREATE TABLE trayecto_tmp (
-  ID                       BIGINT        NOT NULL AUTO_INCREMENT,
-  CODIGO_RUTA              VARCHAR(255)  DEFAULT NULL,
-  ORDEN                    VARCHAR(255)  DEFAULT NULL,
-  UBICACION                VARCHAR(1000) DEFAULT NULL,
-  LATITUD                  VARCHAR(50)   DEFAULT NULL,
-  LONGITUD                 VARCHAR(50)   DEFAULT NULL,
-  IDENTIFICACION_CONDUCTOR VARCHAR(255)  DEFAULT NULL,
-  PLACA                    VARCHAR(255)  DEFAULT NULL,
-  ESTADO                   VARCHAR(10)   NOT NULL,
-  OBSERVACION              VARCHAR(2000) DEFAULT NULL,
-  ID_CARGUE                BIGINT        NOT NULL,
-  PRIMARY KEY (ID),
-  KEY idx_trayecto_tmp_cargue (ID_CARGUE),
-  CONSTRAINT trayecto_tmp_estado_check CHECK (ESTADO IN ('CARGADO','VALIDADO','PROCESADO','ERROR'))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Registro atómico: el identificador representa el minuto REAL del cargue.
+CREATE TABLE cargue_archivo (
+  tipo VARCHAR(10) NOT NULL,
+  id_cargue BIGINT NOT NULL,
+  PRIMARY KEY (tipo, id_cargue)
+) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------------
--- 9. ENTIDAD PERSONA_TMP (Requerida por PersonaRepository de Java)
--- ---------------------------------------------------------------------
 CREATE TABLE persona_tmp (
-  ID          BIGINT       NOT NULL AUTO_INCREMENT,
-  PNOMBRE     VARCHAR(100) DEFAULT NULL,
-  EDAD        VARCHAR(3)   DEFAULT NULL,
-  UBICACION   VARCHAR(100) DEFAULT NULL,
-  ESTADO      VARCHAR(10)  NOT NULL,
-  OBSERVACION VARCHAR(500) DEFAULT NULL,
-  ID_CARGUE   DOUBLE       NOT NULL,
-  PRIMARY KEY (ID),
-  KEY idx_persona_tmp_cargue (ID_CARGUE),
-  CONSTRAINT persona_tmp_check CHECK (ESTADO IN ('CARGADO','VALIDADO','PROCESADO','ERROR'))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  pnombre TEXT,
+  edad TEXT,
+  ubicacion TEXT,
+  estado VARCHAR(10) NOT NULL DEFAULT 'CARGADO'
+    CHECK (estado IN ('CARGADO','VALIDADO','PROCESADO','ERROR')),
+  observacion TEXT,
+  id_cargue BIGINT NOT NULL,
+  KEY idx_persona_tmp_cargue (id_cargue)
+) ENGINE=InnoDB;
 
+CREATE TABLE mensaje_recibido (
+  id VARCHAR(36) PRIMARY KEY,
+  contenido TEXT NOT NULL,
+  recibido TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
 
--- ---------------------------------------------------------------------
--- 10. COORDENADAS (la llena la tarea programada de personas)
--- ---------------------------------------------------------------------
-CREATE TABLE coordenadas (
-  id_coordenada INT NOT NULL AUTO_INCREMENT,
-  persona INT NOT NULL,
-  marca VARCHAR(100) DEFAULT NULL,
-  longitud DOUBLE NOT NULL,
-  latitud DOUBLE NOT NULL,
-  PRIMARY KEY (id_coordenada),
-  KEY idx_coordenadas_persona (persona)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =====================================================================
--- PROCEDIMIENTOS ALMACENADOS
--- =====================================================================
-
--- 1. Compatibilidad con PersonaRepository (Evita error 1305)
-DROP PROCEDURE IF EXISTS CARGAR_DATOS_EXCEL;
+-- Los procedimientos participan en la transacción del servicio JPA.
 DELIMITER $$
-CREATE PROCEDURE CARGAR_DATOS_EXCEL(
-    IN pnombre   VARCHAR(100),
-    IN edad      VARCHAR(3),
-    IN ubicacion VARCHAR(100),
-    IN idCargue  DOUBLE)
+CREATE PROCEDURE CARGAR_DATOS_EXCEL(IN pnombre TEXT, IN edad TEXT, IN ubicacion TEXT, IN idCargue BIGINT)
 BEGIN
-    INSERT INTO persona_tmp (PNOMBRE, EDAD, UBICACION, ESTADO, OBSERVACION, ID_CARGUE)
-    VALUES (pnombre, edad, ubicacion, 'CARGADO', '', idCargue);
+  INSERT INTO persona_tmp(pnombre,edad,ubicacion,estado,observacion,id_cargue)
+  VALUES(pnombre,edad,ubicacion,'CARGADO','',idCargue);
+END $$
+CREATE PROCEDURE VALIDAR_DATOS_CARGUE(IN p_id BIGINT)
+BEGIN
+  UPDATE persona_tmp SET observacion=CONCAT(
+    IF(pnombre IS NULL OR TRIM(pnombre)='', 'El campo Nombre no puede ser vacio. ', ''),
+    IF(CHAR_LENGTH(pnombre)>100, 'El nombre supera 100 caracteres. ', ''),
+    IF(edad IS NULL OR TRIM(edad)='', 'El campo Edad no puede ser vacio. ',
+      IF(edad NOT REGEXP '^[0-9]{1,3}$', 'El campo Edad no cumple con las especificaciones numericas. ',
+        IF(CAST(edad AS UNSIGNED) NOT BETWEEN 18 AND 35, 'La edad debe estar entre 18 y 35. ', ''))),
+    IF(ubicacion IS NULL OR TRIM(ubicacion)='', 'El campo ubicacion no puede ser vacio. ', ''),
+    IF(CHAR_LENGTH(ubicacion)>255, 'La ubicacion supera 255 caracteres. ', ''))
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR','VALIDADO');
+  UPDATE persona_tmp SET estado=IF(observacion='', 'VALIDADO', 'ERROR')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR','VALIDADO');
+END $$
+CREATE PROCEDURE PROCESAR_DATOS_EXCEL(IN p_id BIGINT)
+BEGIN
+  -- El Excel complementario solo suministra nombre, edad y ubicación.
+  -- No se inventan documentos de identidad, correos ni usuarios administrativos.
+  INSERT INTO persona(nombres,pnombre,edad,ubicacion)
+  SELECT pnombre,pnombre,CAST(edad AS UNSIGNED),ubicacion FROM persona_tmp
+  WHERE id_cargue=p_id AND estado='VALIDADO';
+  UPDATE persona_tmp SET estado='PROCESADO' WHERE id_cargue=p_id AND estado='VALIDADO';
+END $$
+CREATE PROCEDURE CARGAR_TRAYECTOS_EXCEL(IN codigoRuta TEXT, IN orden TEXT, IN ubicacion TEXT,
+  IN identificacionConductor TEXT, IN placa TEXT, IN nombreConductor TEXT, IN edadConductor TEXT,
+  IN loginRegistro VARCHAR(100), IN idCargue BIGINT)
+BEGIN
+  INSERT INTO trayecto_tmp(codigo_ruta,orden,ubicacion,identificacion_conductor,placa,
+    nombre_conductor,edad_conductor,login_registro,id_cargue,estado,observacion)
+  VALUES(codigoRuta,orden,ubicacion,identificacionConductor,placa,nombreConductor,edadConductor,
+    loginRegistro,idCargue,'CARGADO','');
+END $$
+CREATE PROCEDURE VALIDAR_TRAYECTOS_CARGUE(IN p_id BIGINT)
+BEGIN
+  -- Revalidar no toca los procesados ni duplica observaciones.
+  UPDATE trayecto_tmp SET observacion='',estado='CARGADO'
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','VALIDADO','ERROR');
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El codigo de ruta no puede ser vacio. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (codigo_ruta IS NULL OR TRIM(codigo_ruta)='');
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El codigo de ruta supera 30 caracteres. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (CHAR_LENGTH(TRIM(codigo_ruta))>30);
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El orden del trayecto no puede ser vacio. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (orden IS NULL OR TRIM(orden)='');
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El orden debe ser un entero entre 0 y 99999. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (orden IS NOT NULL AND TRIM(orden)<>'' AND (TRIM(orden) NOT REGEXP '^[0-9]{1,5}$'));
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'La ubicacion no puede ser vacia. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (ubicacion IS NULL OR TRIM(ubicacion)='');
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'La ubicacion supera 255 caracteres. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (CHAR_LENGTH(TRIM(ubicacion))>255);
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'La identificacion del conductor no puede ser vacia. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (identificacion_conductor IS NULL OR TRIM(identificacion_conductor)='');
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'La placa no puede ser vacia. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (placa IS NULL OR TRIM(placa)='');
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El vehiculo no existe. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (TRIM(placa)<>'' AND NOT EXISTS (SELECT 1 FROM vehiculos v WHERE v.placa=TRIM(t.placa)));
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El vehiculo no tiene todos sus documentos habilitados y vigentes. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (EXISTS (SELECT 1 FROM vehiculos v WHERE v.placa=TRIM(t.placa) AND (NOT EXISTS (SELECT 1 FROM vehiculo_documento d WHERE d.id_vehiculo=v.id_vehiculo) OR EXISTS (SELECT 1 FROM vehiculo_documento d WHERE d.id_vehiculo=v.id_vehiculo AND (d.estado_documento<>'Habilitado' OR d.fecha_vencimiento<CURDATE())))));
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El conductor no existe o no es de tipo Conductor. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (TRIM(identificacion_conductor)<>'' AND NOT EXISTS (SELECT 1 FROM persona p WHERE p.identificacion=TRIM(t.identificacion_conductor) AND p.tipo_persona='C'));
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'El conductor no puede operar este vehiculo (requiere PO y licencia no vencida). ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (TRIM(identificacion_conductor)<>'' AND TRIM(placa)<>'' AND NOT EXISTS (SELECT 1 FROM persona p JOIN vehiculo_conductor vc ON vc.persona_id=p.id JOIN vehiculos v ON v.id_vehiculo=vc.vehiculo_id WHERE p.identificacion=TRIM(t.identificacion_conductor) AND p.tipo_persona='C' AND v.placa=TRIM(t.placa) AND vc.estado='PO' AND (p.fecha_vigencia_licencia IS NULL OR p.fecha_vigencia_licencia>=CURDATE())));
+  UPDATE trayecto_tmp t SET estado='ERROR', observacion=CONCAT(observacion,'Ya existe un trayecto con ese codigo de ruta y orden. ')
+  WHERE id_cargue=p_id AND estado IN ('CARGADO','ERROR') AND (TRIM(orden) REGEXP '^[0-9]{1,5}$' AND EXISTS (SELECT 1 FROM trayecto y WHERE y.codigo_ruta=TRIM(t.codigo_ruta) AND y.orden_parada=CAST(TRIM(t.orden) AS UNSIGNED)));
+  UPDATE trayecto_tmp t JOIN (
+    SELECT TRIM(codigo_ruta) ruta,CAST(TRIM(orden) AS UNSIGNED) numero FROM trayecto_tmp
+    WHERE id_cargue=p_id AND TRIM(orden) REGEXP '^[0-9]{1,5}$'
+    GROUP BY TRIM(codigo_ruta),CAST(TRIM(orden) AS UNSIGNED) HAVING COUNT(*)>1
+  ) duplicado ON TRIM(t.codigo_ruta)=duplicado.ruta
+    AND TRIM(t.orden) REGEXP '^[0-9]{1,5}$' AND CAST(TRIM(t.orden) AS UNSIGNED)=duplicado.numero
+  SET t.estado='ERROR',t.observacion=CONCAT(t.observacion,'Ruta y orden repetidos en el archivo. ')
+  WHERE t.id_cargue=p_id AND t.estado IN ('CARGADO','ERROR');
+  UPDATE trayecto_tmp SET estado='VALIDADO' WHERE id_cargue=p_id AND estado='CARGADO';
+END $$
+CREATE PROCEDURE PROCESAR_TRAYECTOS_EXCEL(IN p_id BIGINT, IN p_login VARCHAR(100))
+BEGIN
+  -- Revalidar inmediatamente antes de insertar evita procesar un estado obsoleto.
+  CALL VALIDAR_TRAYECTOS_CARGUE(p_id);
+  INSERT INTO trayecto(id_persona,id_vehiculo,codigo_ruta,ubicacion,orden_parada,latitud,longitud,login_registro)
+  SELECT p.id,v.id_vehiculo,TRIM(t.codigo_ruta),TRIM(t.ubicacion),CAST(TRIM(t.orden) AS UNSIGNED),
+    CAST(NULLIF(t.latitud,'') AS DECIMAL(10,7)),CAST(NULLIF(t.longitud,'') AS DECIMAL(10,7)),p_login
+  FROM trayecto_tmp t JOIN persona p ON p.identificacion=TRIM(t.identificacion_conductor)
+  JOIN vehiculos v ON v.placa=TRIM(t.placa) WHERE t.id_cargue=p_id AND t.estado='VALIDADO';
+  UPDATE trayecto_tmp SET estado='PROCESADO' WHERE id_cargue=p_id AND estado='VALIDADO';
 END $$
 DELIMITER ;
-
-DROP PROCEDURE IF EXISTS VALIDAR_DATOS_CARGUE;
-DELIMITER $$
-CREATE PROCEDURE VALIDAR_DATOS_CARGUE(IN idCargue DOUBLE)
-BEGIN
-    START TRANSACTION;
-    UPDATE persona_tmp SET ESTADO = 'VALIDADO' WHERE ID_CARGUE = idCargue AND ESTADO = 'CARGADO';
-    COMMIT;
-END $$
-DELIMITER ;
-
-DROP PROCEDURE IF EXISTS PROCESAR_DATOS_EXCEL;
-DELIMITER $$
-CREATE PROCEDURE PROCESAR_DATOS_EXCEL(IN idCargue DOUBLE)
-BEGIN
-    START TRANSACTION;
-    UPDATE persona_tmp SET ESTADO = 'PROCESADO' WHERE ID_CARGUE = idCargue AND ESTADO = 'VALIDADO';
-    COMMIT;
-END $$
-DELIMITER ;
-
-
--- 2. Cargue de Trayectos (Entrega 4)
-DROP PROCEDURE IF EXISTS CARGAR_TRAYECTOS_EXCEL;
-DELIMITER $$
-CREATE PROCEDURE CARGAR_TRAYECTOS_EXCEL(
-    IN p_codigo_ruta  VARCHAR(255),
-    IN p_orden        VARCHAR(255),
-    IN p_ubicacion    VARCHAR(1000),
-    IN p_identificacion_conductor VARCHAR(255),
-    IN p_placa        VARCHAR(255),
-    IN p_id_cargue    BIGINT)
-BEGIN
-    INSERT INTO trayecto_tmp
-        (CODIGO_RUTA, ORDEN, UBICACION, IDENTIFICACION_CONDUCTOR, PLACA, ESTADO, OBSERVACION, ID_CARGUE)
-    VALUES
-        (p_codigo_ruta, p_orden, p_ubicacion, p_identificacion_conductor, p_placa, 'CARGADO', '', p_id_cargue);
-END $$
-DELIMITER ;
-
-
--- 3. Validación de Trayectos (Entrega 4)
-DROP PROCEDURE IF EXISTS VALIDAR_TRAYECTOS_CARGUE;
-DELIMITER $$
-CREATE PROCEDURE VALIDAR_TRAYECTOS_CARGUE(IN p_id_cargue BIGINT)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
-
-    START TRANSACTION;
-
-    UPDATE trayecto_tmp SET ESTADO='ERROR',
-           OBSERVACION = CONCAT(IFNULL(OBSERVACION,''),' El codigo de ruta no puede ser vacio.')
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO IN ('CARGADO','ERROR')
-       AND (CODIGO_RUTA IS NULL OR TRIM(CODIGO_RUTA) = '');
-
-    UPDATE trayecto_tmp SET ESTADO='ERROR',
-           OBSERVACION = CONCAT(IFNULL(OBSERVACION,''),' El orden del trayecto no puede ser vacio.')
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO IN ('CARGADO','ERROR')
-       AND (ORDEN IS NULL OR TRIM(ORDEN) = '');
-
-    UPDATE trayecto_tmp SET ESTADO='ERROR',
-           OBSERVACION = CONCAT(IFNULL(OBSERVACION,''),' El orden del trayecto debe ser un numero entero mayor o igual a 0 (maximo 5 digitos).')
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO IN ('CARGADO','ERROR')
-       AND ORDEN IS NOT NULL AND TRIM(ORDEN) <> ''
-       AND ORDEN NOT REGEXP '^[0-9]{1,5}$';
-
-    UPDATE trayecto_tmp SET ESTADO='ERROR',
-           OBSERVACION = CONCAT(IFNULL(OBSERVACION,''),' La ubicacion no puede ser vacia.')
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO IN ('CARGADO','ERROR')
-       AND (UBICACION IS NULL OR TRIM(UBICACION) = '');
-
-    UPDATE trayecto_tmp SET ESTADO='ERROR',
-           OBSERVACION = CONCAT(IFNULL(OBSERVACION,''),' La identificacion del conductor no puede ser vacia.')
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO IN ('CARGADO','ERROR')
-       AND (IDENTIFICACION_CONDUCTOR IS NULL OR TRIM(IDENTIFICACION_CONDUCTOR) = '');
-
-    UPDATE trayecto_tmp SET ESTADO='ERROR',
-           OBSERVACION = CONCAT(IFNULL(OBSERVACION,''),' La placa del vehiculo no puede ser vacia.')
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO IN ('CARGADO','ERROR')
-       AND (PLACA IS NULL OR TRIM(PLACA) = '');
-
-    UPDATE trayecto_tmp t SET t.ESTADO='ERROR',
-           t.OBSERVACION = CONCAT(IFNULL(t.OBSERVACION,''),' El vehiculo con la placa indicada no existe.')
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO IN ('CARGADO','ERROR')
-       AND t.PLACA IS NOT NULL AND TRIM(t.PLACA) <> ''
-       AND NOT EXISTS (SELECT 1 FROM vehiculos v WHERE v.placa = TRIM(t.PLACA));
-
-    UPDATE trayecto_tmp t SET t.ESTADO='ERROR',
-           t.OBSERVACION = CONCAT(IFNULL(t.OBSERVACION,''),' El vehiculo tiene documentos que no estan en estado Habilitado.')
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO IN ('CARGADO','ERROR')
-       AND t.PLACA IS NOT NULL AND TRIM(t.PLACA) <> ''
-       AND EXISTS (SELECT 1 FROM vehiculos v WHERE v.placa = TRIM(t.PLACA))
-       AND EXISTS (SELECT 1 FROM vehiculo_documento d
-                     JOIN vehiculos v ON v.id_vehiculo = d.id_vehiculo
-                    WHERE v.placa = TRIM(t.PLACA) AND d.estado_documento <> 'Habilitado');
-
-    UPDATE trayecto_tmp t SET t.ESTADO='ERROR',
-           t.OBSERVACION = CONCAT(IFNULL(t.OBSERVACION,''),' El conductor no existe o la persona no es de tipo Conductor.')
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO IN ('CARGADO','ERROR')
-       AND t.IDENTIFICACION_CONDUCTOR IS NOT NULL AND TRIM(t.IDENTIFICACION_CONDUCTOR) <> ''
-       AND NOT EXISTS (SELECT 1 FROM persona p
-                        WHERE p.identificacion = TRIM(t.IDENTIFICACION_CONDUCTOR)
-                          AND p.tipo_persona = 'C');
-
-    UPDATE trayecto_tmp t SET t.ESTADO='ERROR',
-           t.OBSERVACION = CONCAT(IFNULL(t.OBSERVACION,''),' El conductor no tiene estado PO (Puede Operar) en la relacion con el vehiculo.')
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO IN ('CARGADO','ERROR')
-       AND t.IDENTIFICACION_CONDUCTOR IS NOT NULL AND TRIM(t.IDENTIFICACION_CONDUCTOR) <> ''
-       AND t.PLACA IS NOT NULL AND TRIM(t.PLACA) <> ''
-       AND EXISTS (SELECT 1 FROM persona p
-                    WHERE p.identificacion = TRIM(t.IDENTIFICACION_CONDUCTOR) AND p.tipo_persona = 'C')
-       AND NOT EXISTS (SELECT 1 FROM persona p
-                         JOIN vehiculo_conductor vc ON vc.persona_id = p.id
-                         JOIN vehiculos v ON v.id_vehiculo = vc.vehiculo_id
-                        WHERE p.identificacion = TRIM(t.IDENTIFICACION_CONDUCTOR)
-                          AND p.tipo_persona = 'C'
-                          AND v.placa = TRIM(t.PLACA)
-                          AND vc.estado = 'PO');
-
-    UPDATE trayecto_tmp t
-      JOIN (SELECT CODIGO_RUTA, CAST(ORDEN AS UNSIGNED) AS ORD
-              FROM trayecto_tmp
-             WHERE ID_CARGUE = p_id_cargue
-               AND CODIGO_RUTA IS NOT NULL AND TRIM(CODIGO_RUTA) <> ''
-               AND ORDEN REGEXP '^[0-9]{1,5}$'
-             GROUP BY CODIGO_RUTA, CAST(ORDEN AS UNSIGNED)
-            HAVING COUNT(*) > 1) d
-        ON d.CODIGO_RUTA = t.CODIGO_RUTA AND t.ORDEN REGEXP '^[0-9]{1,5}$' AND d.ORD = CAST(t.ORDEN AS UNSIGNED)
-       SET t.ESTADO='ERROR',
-           t.OBSERVACION = CONCAT(IFNULL(t.OBSERVACION,''),' La combinacion codigo de ruta + orden esta repetida en el archivo.')
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO IN ('CARGADO','ERROR');
-
-    UPDATE trayecto_tmp t SET t.ESTADO='ERROR',
-           t.OBSERVACION = CONCAT(IFNULL(t.OBSERVACION,''),' Ya existe un trayecto con ese codigo de ruta y orden.')
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO IN ('CARGADO','ERROR')
-       AND t.CODIGO_RUTA IS NOT NULL AND t.ORDEN REGEXP '^[0-9]{1,5}$'
-       AND EXISTS (SELECT 1 FROM trayecto y
-                    WHERE y.codigo_ruta = TRIM(t.CODIGO_RUTA) AND y.orden_parada = CAST(t.ORDEN AS UNSIGNED));
-
-    UPDATE trayecto_tmp SET ESTADO='VALIDADO'
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO = 'CARGADO'
-       AND (OBSERVACION IS NULL OR OBSERVACION = '');
-
-    COMMIT;
-END $$
-DELIMITER ;
-
-
--- 4. Procesamiento de Trayectos (Entrega 4)
-DROP PROCEDURE IF EXISTS PROCESAR_TRAYECTOS_EXCEL;
-DELIMITER $$
-CREATE PROCEDURE PROCESAR_TRAYECTOS_EXCEL(IN p_id_cargue BIGINT, IN p_login VARCHAR(100))
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-    BEGIN
-        ROLLBACK;
-        RESIGNAL;
-    END;
-
-    START TRANSACTION;
-
-    INSERT INTO trayecto (id_persona, id_vehiculo, codigo_ruta, ubicacion, orden_parada, latitud, longitud, login_registro)
-    SELECT p.id, v.id_vehiculo, TRIM(t.CODIGO_RUTA), TRIM(t.UBICACION), CAST(t.ORDEN AS UNSIGNED),
-           CAST(NULLIF(TRIM(t.LATITUD),'')  AS DOUBLE),
-           CAST(NULLIF(TRIM(t.LONGITUD),'') AS DOUBLE),
-           p_login
-      FROM trayecto_tmp t
-      JOIN persona   p ON p.identificacion = TRIM(t.IDENTIFICACION_CONDUCTOR) AND p.tipo_persona = 'C'
-      JOIN vehiculos v ON v.placa = TRIM(t.PLACA)
-     WHERE t.ID_CARGUE = p_id_cargue AND t.ESTADO = 'VALIDADO';
-
-    UPDATE trayecto_tmp SET ESTADO = 'PROCESADO'
-     WHERE ID_CARGUE = p_id_cargue AND ESTADO = 'VALIDADO';
-
-    COMMIT;
-END $$
-DELIMITER ;
-
 
 -- =====================================================================
 -- DATOS INICIALES DE PRUEBA (SEED DATA)
@@ -444,3 +349,10 @@ INSERT INTO vehiculo_conductor (id, estado, fecha_asociacion, persona_id, vehicu
 INSERT INTO trayecto (id_persona, id_vehiculo, codigo_ruta, ubicacion, orden_parada, latitud, longitud, login_registro)
 VALUES (4, 3, 'T-001', 'Parque Murillo Toro, Ibague, Tolima', 0, NULL, NULL, 'seed'),
        (4, 3, 'T-001', 'Terminal de Transportes, Ibague, Tolima', 1, NULL, NULL, 'seed');
+
+CREATE TABLE geocoding_cache (
+  ubicacion VARCHAR(255) PRIMARY KEY,
+  latitud DOUBLE,
+  longitud DOUBLE,
+  consultado TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -1,0 +1,11 @@
+{
+  "identificacion": "990000003",
+  "tipoIdentificacion": "INVALIDO",
+  "nombres": "Laura",
+  "pnombre": "Laura",
+  "apellidos": "Demo",
+  "edad": 32,
+  "ubicacion": "Ibagué, Tolima, Colombia",
+  "correo": "laura.demo@example.com",
+  "tipoPersona": "A"
+}

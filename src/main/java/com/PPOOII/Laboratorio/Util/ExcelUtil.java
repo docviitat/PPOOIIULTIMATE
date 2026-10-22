@@ -13,7 +13,7 @@ import org.apache.poi.ss.usermodel.Row;
 /** Utilidades de lectura de celdas Excel (el dato se traslada sin alteraciones). */
 public final class ExcelUtil {
 
-	private static final DataFormatter FORMATTER = new DataFormatter();
+	private static final ThreadLocal<DataFormatter> FORMATTER = ThreadLocal.withInitial(DataFormatter::new);
 
 	private ExcelUtil() {}
 
@@ -27,13 +27,14 @@ public final class ExcelUtil {
 		if (cell == null) return "";
 		CellType tipo = cell.getCellType();
 		if (tipo == CellType.FORMULA) {
-			return FORMATTER.formatCellValue(cell, evaluator);
+			return FORMATTER.get().formatCellValue(cell, evaluator);
 		}
-		if (tipo == CellType.NUMERIC && !DateUtil.isCellDateFormatted(cell)) {
+		if (tipo == CellType.NUMERIC && !DateUtil.isCellDateFormatted(cell)
+            && "General".equals(cell.getCellStyle().getDataFormatString())) {
 			return new BigDecimal(String.valueOf(cell.getNumericCellValue())).stripTrailingZeros().toPlainString();
 		}
 		if (tipo == CellType.BLANK) return "";
-		return FORMATTER.formatCellValue(cell);
+		return FORMATTER.get().formatCellValue(cell);
 	}
 
 	/** Una fila está vacía cuando ninguna de las primeras {@code columnas} tiene contenido. */

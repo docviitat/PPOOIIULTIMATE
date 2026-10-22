@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "Laboratorio4 - Entregas 3 y 4",
+    "name": "Laboratorio4 - Entregas 1 a 4 y RabbitMQ",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -15,6 +15,10 @@
     {
       "key": "idCargue",
       "value": ""
+    },
+    {
+      "key": "apikey",
+      "value": "api_key_67890"
     }
   ],
   "item": [
@@ -29,7 +33,7 @@
           },
           {
             "key": "APIkey",
-            "value": "TU_APIKEY"
+            "value": "{{apikey}}"
           }
         ],
         "url": {
@@ -40,7 +44,7 @@
         },
         "body": {
           "mode": "raw",
-          "raw": "{\"username\":\"TU_LOGIN\",\"password\":\"TU_PASSWORD\"}",
+          "raw": "{\"username\":\"mgomez\",\"password\":\"admin123\"}",
           "options": {
             "raw": {
               "language": "json"
@@ -54,7 +58,7 @@
           "script": {
             "type": "text/javascript",
             "exec": [
-              "var t = pm.response.json().token; pm.collectionVariables.set('token', t);"
+              "var t = pm.response.json().token.replace(/^Bearer\\s+/i, ''); pm.collectionVariables.set('token', t);"
             ]
           }
         }
@@ -292,7 +296,7 @@
       }
     },
     {
-      "name": "Entrega 1 - Vehiculos y documentos (token)",
+      "name": "Entrega 1 - Vehiculos y documentos (JWT y APIKey)",
       "item": [
         {
           "name": "[E1] Crear documento",
@@ -306,6 +310,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -325,6 +333,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -344,6 +356,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -363,6 +379,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -378,6 +398,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -393,6 +417,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -408,6 +436,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -423,6 +455,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -442,6 +478,10 @@
               {
                 "key": "Authorization",
                 "value": "Bearer {{token}}"
+              },
+              {
+                "key": "APIkey",
+                "value": "{{apikey}}"
               }
             ],
             "url": {
@@ -473,7 +513,7 @@
               }
             ],
             "url": {
-              "raw": "{{base}}/LaboratorioV1/persona"
+              "raw": "{{base}}/LaboratorioV2/persona"
             },
             "body": {
               "mode": "raw",
@@ -496,7 +536,7 @@
               }
             ],
             "url": {
-              "raw": "{{base}}/LaboratorioV1/persona"
+              "raw": "{{base}}/LaboratorioV2/persona"
             },
             "body": {
               "mode": "raw",
@@ -562,6 +602,29 @@
             "body": {
               "mode": "raw",
               "raw": "[\n  {\n    \"codigoDocumento\": \"SOAT\",\n    \"numeroDocumento\": \"SOAT-0001\",\n    \"fechaExpedicion\": \"2026-01-01\",\n    \"fechaVencimiento\": \"2027-01-01\",\n    \"archivoBase64\": \"JVBERi0xLjQ=\"\n  }\n]"
+            }
+          }
+        },
+        {
+          "name": "[E2] Verificar documento de vehiculo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV2/vehiculos/ABC123/documentos/1/estado"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"Habilitado\"\n}"
             }
           }
         },
@@ -658,6 +721,125 @@
             "header": [],
             "url": {
               "raw": "{{base}}/LaboratorioV2/publico/personas/total-por-tipo"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "RabbitMQ - Productor y consumidor independientes",
+      "item": [
+        {
+          "name": "Detener consumidor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV4/mensajes/consumidor"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"activo\": false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Publicar sin consumidor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV4/mensajes"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"contenido\": \"Prueba de desacoplamiento\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Monitorear cola",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV4/mensajes/estado"
+            }
+          }
+        },
+        {
+          "name": "Reanudar consumidor",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV4/mensajes/consumidor"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"activo\": true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Consultar recibidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base}}/LaboratorioV4/mensajes/recibidos"
             }
           }
         }

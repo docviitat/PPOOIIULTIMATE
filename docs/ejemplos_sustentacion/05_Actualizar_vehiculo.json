@@ -1,0 +1,12 @@
+{
+  "idVehiculo": 12345,
+  "tipoVehiculo": "Automovil",
+  "placa": "DEM123",
+  "tipoServicio": "A",
+  "tipoCombustible": "Gasolina",
+  "capacidadPasajeros": 5,
+  "color": "Blanco",
+  "modelo": 2025,
+  "marca": "Toyota",
+  "linea": "Corolla"
+}

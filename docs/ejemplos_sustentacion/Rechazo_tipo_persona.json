@@ -1,0 +1,11 @@
+{
+  "identificacion": "990000004",
+  "tipoIdentificacion": "CC",
+  "nombres": "Laura",
+  "pnombre": "Laura",
+  "apellidos": "Demo",
+  "edad": 32,
+  "ubicacion": "Ibagué, Tolima, Colombia",
+  "correo": "laura.demo@example.com",
+  "tipoPersona": "CLIENTE"
+}

@@ -21,6 +21,7 @@ class WebSecurityConfig{
     @Bean
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http
+                .sessionManagement(s -> s.sessionCreationPolicy(org.springframework.security.config.http.SessionCreationPolicy.STATELESS))
                 .csrf((csrf) -> csrf
                         .disable())
                 .authorizeHttpRequests( authz -> authz

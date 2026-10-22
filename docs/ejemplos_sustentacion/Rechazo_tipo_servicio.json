@@ -1,0 +1,19 @@
+{
+  "tipoVehiculo": "Automovil",
+  "placa": "BAD003",
+  "tipoServicio": "INVALIDO",
+  "tipoCombustible": "Gasolina",
+  "capacidadPasajeros": 5,
+  "color": "Azul",
+  "modelo": 2025,
+  "marca": "Toyota",
+  "linea": "Corolla",
+  "documentos": [
+    {
+      "codigoDocumento": "DEMODOC",
+      "numeroDocumento": "DEMO-001",
+      "fechaExpedicion": "2026-01-01",
+      "fechaVencimiento": "2030-12-31"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Entity(name="COOR")
 @Table(name = "coordenadas")
-@Schema(description = "Coordenadas geográficas de una persona, obtenidas con la API de Google Maps.")
+@Schema(description = "Coordenadas geográficas de una persona, obtenidas con la API de Nominatim / OpenStreetMap.")
 public class Coordenadas implements Serializable{
 	private static final long serialVersionUID = 1L;
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

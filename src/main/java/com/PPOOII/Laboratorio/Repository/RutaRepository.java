@@ -19,9 +19,9 @@ public class RutaRepository {
 	private static final String BASE =
 		"SELECT t.codigo_ruta AS CODIGO_RUTA, t.orden_parada AS ORDEN, t.ubicacion AS UBICACION, t.latitud AS LATITUD, t.longitud AS LONGITUD, "
 		+ "p.identificacion AS IDENTIFICACION_CONDUCTOR, CONCAT(p.nombres, ' ', p.apellidos) AS NOMBRE_CONDUCTOR, "
-		+ "vc.estado AS ESTADO_CONDUCTOR, v.placa AS PLACA, "
-		+ "(v.id_vehiculo IS NOT NULL AND NOT EXISTS (SELECT 1 FROM vehiculo_documento d "
-		+ "  WHERE d.id_vehiculo = t.id_vehiculo AND d.estado_documento <> 'Habilitado')) AS HABILITADO "
+		+ "CASE WHEN p.fecha_vigencia_licencia < CURDATE() THEN 'RO' ELSE vc.estado END AS ESTADO_CONDUCTOR, v.placa AS PLACA, "
+		+ "(v.id_vehiculo IS NOT NULL AND EXISTS (SELECT 1 FROM vehiculo_documento d WHERE d.id_vehiculo=t.id_vehiculo) AND NOT EXISTS (SELECT 1 FROM vehiculo_documento d "
+		+ "  WHERE d.id_vehiculo = t.id_vehiculo AND (d.estado_documento <> 'Habilitado' OR d.fecha_vencimiento < CURDATE()))) AS HABILITADO "
 		+ "FROM trayecto t "
 		+ "LEFT JOIN vehiculos v ON v.id_vehiculo = t.id_vehiculo "
 		+ "LEFT JOIN persona p ON p.id = t.id_persona "
@@ -83,15 +83,17 @@ public class RutaRepository {
 
 	// ---- Reglas para crear un trayecto ----
 	public boolean vehiculoConDocumentosHabilitados(String placa) {
-		Integer n = jdbc.queryForObject("SELECT COUNT(*) FROM vehiculo_documento d JOIN vehiculos v ON v.id_vehiculo = d.id_vehiculo "
-				+ "WHERE v.placa = ? AND d.estado_documento <> 'Habilitado'", Integer.class, placa);
-		return n != null && n == 0;
+        Integer n=jdbc.queryForObject("SELECT COUNT(*) FROM vehiculos v WHERE v.placa=? "
+            + "AND EXISTS (SELECT 1 FROM vehiculo_documento d WHERE d.id_vehiculo=v.id_vehiculo) "
+            + "AND NOT EXISTS (SELECT 1 FROM vehiculo_documento d WHERE d.id_vehiculo=v.id_vehiculo "
+            + "AND (d.estado_documento<>'Habilitado' OR d.fecha_vencimiento<CURDATE()))",Integer.class,placa);
+        return n != null && n > 0;
 	}
 
 	public boolean conductorPuedeOperar(String identificacion, String placa) {
 		Integer n = jdbc.queryForObject("SELECT COUNT(*) FROM persona p JOIN vehiculo_conductor vc ON vc.persona_id = p.id "
 				+ "JOIN vehiculos v ON v.id_vehiculo = vc.vehiculo_id "
-				+ "WHERE p.identificacion = ? AND p.tipo_persona = 'C' AND v.placa = ? AND vc.estado = 'PO'", Integer.class, identificacion, placa);
+				+ "WHERE p.identificacion = ? AND p.tipo_persona = 'C' AND v.placa = ? AND vc.estado = 'PO' AND (p.fecha_vigencia_licencia IS NULL OR p.fecha_vigencia_licencia >= CURDATE())", Integer.class, identificacion, placa);
 		return n != null && n > 0;
 	}
 

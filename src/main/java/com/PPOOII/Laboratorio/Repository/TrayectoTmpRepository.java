@@ -26,7 +26,7 @@ public interface TrayectoTmpRepository extends JpaRepository<TrayectoTmp, Long> 
 	@Transactional
 	@Procedure(procedureName = "CARGAR_TRAYECTOS_EXCEL")
 	void CARGAR_TRAYECTOS_EXCEL(String codigoRuta, String orden, String ubicacion,
-			String identificacionConductor, String placa, Long idCargue);
+			String identificacionConductor, String placa, String nombreConductor, String edadConductor, String loginRegistro, Long idCargue);
 
 	@Transactional
 	@Procedure(procedureName = "VALIDAR_TRAYECTOS_CARGUE")

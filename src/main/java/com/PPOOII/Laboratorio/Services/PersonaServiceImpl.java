@@ -53,6 +53,10 @@ public class PersonaServiceImpl implements IPersonaService{
 			throw Validaciones.error(org.springframework.http.HttpStatus.NOT_FOUND, "No existe la persona con id " + p.getId() + ".");
 		}
 		normalizar(p);
+        if ("C".equals(actual.getTipoPersona()) && !"C".equals(p.getTipoPersona()) && IPersonaRepository.asociacionesConductor(p.getId())>0) {
+            throw Validaciones.error(org.springframework.http.HttpStatus.CONFLICT,
+                "Un conductor registrado no puede convertirse en administrativo mientras conserva su historial de operación.");
+        }
 		Persona otra = IPersonaRepository.findByIdentificacion(p.getIdentificacion());
 		if (otra != null && otra.getId() != p.getId()) {
 			throw Validaciones.error(org.springframework.http.HttpStatus.CONFLICT, "Ya existe otra persona con la identificación " + p.getIdentificacion() + ".");
@@ -152,7 +156,10 @@ public class PersonaServiceImpl implements IPersonaService{
 	//PERSONA POR ID | VALOR UNICO
 	@Override
 	public Persona findById(int id) {
-		return IPersonaRepository.findById(id);
+		Persona persona = IPersonaRepository.findById(id);
+		if (persona == null) throw Validaciones.error(org.springframework.http.HttpStatus.NOT_FOUND,
+				"No existe la persona con id " + id + ".");
+		return persona;
 	}
 
 	//LISTA DE PERSONAS POR NOMBRE

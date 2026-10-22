@@ -27,7 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** Entrega 1: CRUD de vehículos, consultas y asociación de documentos. Requiere token. */
 @RestController
 @RequestMapping("/LaboratorioV1")
-@Tag(name = "vehiculo-controller", description = "CRUD, consultas y documentos de vehículos (Entrega 1)")
+@Tag(name = "01. Vehículos", description = "CRUD, consultas y documentos de vehículos (Entrega 1)")
 @SecurityRequirement(name = "bearerAuth")
 public class VehiculoController {
 

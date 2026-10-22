@@ -89,15 +89,22 @@ public class RutaServiceImpl implements IRutaService {
 
 	/** Un trayecto solo se crea si los documentos del vehículo están HABILITADO y el conductor puede operar (PO). */
 	@Override
+	@org.springframework.transaction.annotation.Transactional
 	public Trayecto crearTrayecto(Trayecto t) {
-		if (blank(t.getCodigoRuta()) || t.getOrden() == null || t.getOrden() < 0 || blank(t.getUbicacion())
+		if (t == null || blank(t.getCodigoRuta()) || t.getOrden() == null || t.getOrden() < 0 || blank(t.getUbicacion())
 				|| blank(t.getIdentificacionConductor()) || blank(t.getPlaca())) {
 			throw new CargueException(HttpStatus.BAD_REQUEST,
 					"codigoRuta, orden (>= 0), ubicacion, identificacionConductor y placa son obligatorios.");
 		}
-		t.setId(null);
+		if (t.getCodigoRuta().trim().length()>30 || t.getUbicacion().trim().length()>255 || t.getOrden()>99999)
+            throw new CargueException(HttpStatus.BAD_REQUEST,"Código de ruta, ubicación u orden exceden la longitud permitida.");
+        if ((t.getLatitud()==null)!=(t.getLongitud()==null)
+            || (t.getLatitud()!=null && (!Double.isFinite(t.getLatitud()) || Math.abs(t.getLatitud())>90))
+            || (t.getLongitud()!=null && (!Double.isFinite(t.getLongitud()) || Math.abs(t.getLongitud())>180)))
+            throw new CargueException(HttpStatus.BAD_REQUEST,"Envíe ambas coordenadas válidas o ninguna.");
+        t.setId(null);
 		t.setCodigoRuta(t.getCodigoRuta().trim());
-		t.setPlaca(t.getPlaca().trim());
+		t.setPlaca(t.getPlaca().trim().toUpperCase());
 		t.setIdentificacionConductor(t.getIdentificacionConductor().trim());
 		if (!rutaRepository.existeVehiculo(t.getPlaca())) {
 			throw new CargueException(HttpStatus.BAD_REQUEST, "El vehículo con placa " + t.getPlaca() + " no existe.");

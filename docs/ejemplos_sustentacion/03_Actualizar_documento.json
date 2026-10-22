@@ -1,0 +1,8 @@
+{
+  "idDocumento": 12345,
+  "codigoDocumento": "DEMODOC",
+  "nombreDocumento": "Documento de demostración",
+  "tiposVehiculo": "AM",
+  "obligatoriedad": "RR",
+  "descripcion": "Descripción actualizada en Swagger"
+}

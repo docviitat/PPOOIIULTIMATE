@@ -29,20 +29,33 @@ public class ExcelService implements IExcelService{
 	@Autowired
 	@Qualifier("IPersonaRepository")
 	private PersonaRepository IPersonaRepository;
+	@Autowired private CargueIdService cargueIds;
 	//==================== LOGS ============================
 	private static final Logger logger = org.apache.logging.log4j.LogManager.getLogger(ExcelService.class);
 
 	@Override
+	@org.springframework.transaction.annotation.Transactional
 	public double processExcel(MultipartFile file) {
 		if (file == null || file.isEmpty()) {
 			throw new CargueException(HttpStatus.BAD_REQUEST, "Debe adjuntar un archivo Excel con datos.");
 		}
-		double idCargue = Double.parseDouble(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmm")));
+		String nombre = file.getOriginalFilename()==null ? "" : file.getOriginalFilename().toLowerCase();
+        if (!nombre.endsWith(".xlsx") && !nombre.endsWith(".xls"))
+            throw new CargueException(HttpStatus.BAD_REQUEST,"El archivo debe ser Excel (.xls o .xlsx).");
+        double idCargue = cargueIds.reservar("PERSONAS");
 		int leidos = 0;
 		try (InputStream inputStream = file.getInputStream(); Workbook workbook = WorkbookFactory.create(inputStream)) {
 			// Se procesa la primera hoja del libro
 			Sheet sheet = workbook.getSheetAt(0);
 			FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            Row header=sheet.getRow(0);
+            if (header==null) throw new CargueException(HttpStatus.BAD_REQUEST,"Faltan los encabezados NOMBRE, EDAD, UBICACION.");
+            String[] columnas={"NOMBRE","EDAD","UBICACION"};
+            for(int i=0;i<3;i++) {
+                String h=ExcelUtil.normalizarEncabezado(ExcelUtil.leerCelda(header,i,evaluator));
+                if (i==0 && "PNOMBRE".equals(h)) h="NOMBRE";
+                if(!columnas[i].equals(h)) throw new CargueException(HttpStatus.BAD_REQUEST,"Se esperaba la columna "+columnas[i]);
+            }
 			for (Row row : sheet) {
 				if (row.getRowNum() == 0) continue; // encabezado: NOMBRE | EDAD | UBICACIÓN
 				if (ExcelUtil.filaVacia(row, 3, evaluator)) continue;
@@ -77,7 +90,7 @@ public class ExcelService implements IExcelService{
 			return true;
 		}catch(Exception e) {
 			logger.error("ERROR CARGAR DATOS DE ARCHIVO EXCEL: PROBLEMAS CON LA INVOCACIÓN DEL PROCEDIMIENTO ALMACENADO DE CARGUE DE DATOS!");
-			return false;
+			throw new CargueException(HttpStatus.INTERNAL_SERVER_ERROR,"Falló un procedimiento del cargue de personas; se revierte el archivo.");
 		}
 	}
 
@@ -89,7 +102,7 @@ public class ExcelService implements IExcelService{
 			return true;
 		}catch(Exception e) {
 			logger.error("ERROR VALIDANDO DATOS DE ARCHIVO EXCEL: PROBLEMAS CON LA INVOCACIÓN DEL PROCEDIMIENTO ALMACENADO DE VALIDACIÓN DE DATOS!");
-			return false;
+			throw new CargueException(HttpStatus.INTERNAL_SERVER_ERROR,"Falló un procedimiento del cargue de personas; se revierte el archivo.");
 		}
 	}
 
@@ -101,7 +114,7 @@ public class ExcelService implements IExcelService{
 			return true;
 		}catch(Exception e) {
 			logger.error("ERROR PROCESAR DATOS DE ARCHIVO EXCEL: PROBLEMAS CON LA INVOCACIÓN DEL PROCEDIMIENTO ALMACENADO DE PROCESADO DE DATOS!");
-			return false;
+			throw new CargueException(HttpStatus.INTERNAL_SERVER_ERROR,"Falló un procedimiento del cargue de personas; se revierte el archivo.");
 		}
 	}
 }

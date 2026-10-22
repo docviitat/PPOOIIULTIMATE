@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** Entrega 4 del proyecto: cargue masivo de trayectos desde Excel. Servicios protegidos (token). */
 @RestController
 @RequestMapping("/LaboratorioV4")
-@Tag(name = "cargue-trayectos", description = "Cargue masivo de trayectos desde Excel (Entrega 4) y consulta de cargues")
+@Tag(name = "04. Cargue de trayectos", description = "Cargue masivo de trayectos desde Excel (Entrega 4) y consulta de cargues")
 @SecurityRequirement(name = "bearerAuth")
 public class TrayectoCargueController {
 
@@ -53,7 +53,7 @@ public class TrayectoCargueController {
 		@ApiResponse(responseCode = "403", description = "Token ausente o inválido", content = @Content) })
 	@PostMapping(value = "/trayectos/cargue", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<CargueResumenDTO> cargarTrayectos(
-			@Parameter(description = "Archivo Excel (.xlsx) con la plantilla de trayectos", required = true)
+			@Parameter(description = "Archivo Excel (.xlsx o .xls) con la plantilla de trayectos", required = true)
 			@RequestParam("file") MultipartFile file) {
 		return ResponseEntity.ok(trayectoCargueService.procesarArchivo(file));
 	}
@@ -87,4 +87,12 @@ public class TrayectoCargueController {
 				.contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
 				.body(trayectoCargueService.generarPlantilla());
 	}
+    @Operation(summary = "Descarga un Excel con tres trayectos de ejemplo y una guía de uso.")
+    @GetMapping("/trayectos/ejemplo")
+    public ResponseEntity<byte[]> descargarEjemplo() {
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=Ejemplo_Cargue_Trayectos.xlsx")
+            .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+            .body(trayectoCargueService.generarEjemplo());
+    }
 }

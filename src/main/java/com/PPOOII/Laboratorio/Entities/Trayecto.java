@@ -41,11 +41,11 @@ public class Trayecto implements Serializable {
 	private String ubicacion;
 
 	@Column(name = "latitud")
-	@Schema(description = "Latitud. La completa la tarea programada con Google Maps", example = "4.4389", nullable = true)
+	@Schema(description = "Latitud. La completa la tarea programada con Nominatim / OpenStreetMap", example = "4.4389", nullable = true)
 	private Double latitud;
 
 	@Column(name = "longitud")
-	@Schema(description = "Longitud. La completa la tarea programada con Google Maps", example = "-75.2322", nullable = true)
+	@Schema(description = "Longitud. La completa la tarea programada con Nominatim / OpenStreetMap", example = "-75.2322", nullable = true)
 	private Double longitud;
 
 	@Transient // no es columna: se resuelve a id_persona

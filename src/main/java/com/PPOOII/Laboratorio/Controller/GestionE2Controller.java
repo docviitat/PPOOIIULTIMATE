@@ -26,7 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** Entrega 2: usuarios, cargue de documentos y relación conductor-vehículo. Requieren token. */
 @RestController
 @RequestMapping("/LaboratorioV2")
-@Tag(name = "gestion-entrega2", description = "Usuarios, cargue de documentos y conductores (Entrega 2)")
+@Tag(name = "02. Usuarios, documentos y conductores", description = "Usuarios, cargue de documentos y conductores (Entrega 2)")
 @SecurityRequirement(name = "bearerAuth")
 public class GestionE2Controller {
 
@@ -37,8 +37,8 @@ public class GestionE2Controller {
 	@Operation(summary = "Cambia la contraseña de un usuario.",
 			description = "El login va en la URL y la nueva contraseña en el body: {\"password\": \"NuevaClave123\"}.")
 	@PutMapping("/usuarios/{login}/password")
-	public Map<String, Object> cambiarPassword(@PathVariable("login") String login, @RequestBody Map<String, String> body) {
-		return usuarios.cambiarPassword(login, body == null ? null : body.get("password"));
+	public Map<String, Object> cambiarPassword(@PathVariable("login") String login, @RequestBody com.PPOOII.Laboratorio.DTO.GestionDTO.Password body) {
+		return usuarios.cambiarPassword(login, body == null ? null : body.password());
 	}
 
 	@Operation(summary = "Genera nuevamente el APIKey de un usuario específico.")
@@ -56,19 +56,29 @@ public class GestionE2Controller {
 		return vehiculos.cargarDocumentos(placa, documentos);
 	}
 
+	@Operation(summary = "Cambia el estado de un documento asociado al vehículo.",
+			description = "Permite resolver el estado inicial En Verificacion. No permite habilitar un documento vencido. "
+					+ "idDocumento identifica el documento paramétrico, no el id de la relación. Requiere JWT.")
+	@PutMapping("/vehiculos/{placa}/documentos/{idDocumento}/estado")
+	public VehiculoDTO cambiarEstadoDocumento(@PathVariable("placa") String placa,
+			@PathVariable("idDocumento") int idDocumento,
+			@RequestBody com.PPOOII.Laboratorio.DTO.GestionDTO.EstadoDocumento body) {
+		return vehiculos.cambiarEstadoDocumento(placa, idDocumento, body == null ? null : body.estado());
+	}
+
 	@Operation(summary = "Asocia los vehículos que puede operar un conductor.",
 			description = "Body: {\"placas\": [\"ABC123\", \"XYZ789\"]}. Cada asociación nueva queda en estado EA.")
 	@PostMapping("/conductores/{identificacion}/vehiculos")
 	public List<Map<String, Object>> asociarVehiculos(@PathVariable("identificacion") String identificacion,
-			@RequestBody Map<String, List<String>> body) {
-		return conductores.asociarVehiculos(identificacion, body == null ? null : body.get("placas"));
+			@RequestBody com.PPOOII.Laboratorio.DTO.GestionDTO.Placas body) {
+		return conductores.asociarVehiculos(identificacion, body == null ? null : body.placas());
 	}
 
 	@Operation(summary = "Cambia el estado del conductor en relación con un vehículo (PO, EA, RO).",
 			description = "Body: {\"estado\": \"PO\"}. PO = Puede Operar, EA = Espera de Aprobación, RO = Restringido para Operar.")
 	@PutMapping("/conductores/{identificacion}/vehiculos/{placa}/estado")
 	public Map<String, Object> cambiarEstado(@PathVariable("identificacion") String identificacion,
-			@PathVariable("placa") String placa, @RequestBody Map<String, String> body) {
-		return conductores.cambiarEstado(identificacion, placa, body == null ? null : body.get("estado"));
+			@PathVariable("placa") String placa, @RequestBody com.PPOOII.Laboratorio.DTO.GestionDTO.Estado body) {
+		return conductores.cambiarEstado(identificacion, placa, body == null ? null : body.estado());
 	}
 }

@@ -1,230 +1,378 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Rutas y trayectos · PPOOII</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Rutas · Centro de operaciones</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  :root{--bg:#f4f6f9;--card:#fff;--ink:#1c2733;--muted:#66758a;--line:#e1e6ee;--brand:#1f4e78;--ok:#1e8e4e;--warn:#b7791f;--bad:#c0392b}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-  header{background:var(--brand);color:#fff;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  header h1{font-size:18px;margin:0;font-weight:600}
-  header .user{font-size:13px;opacity:.9}
-  main{max-width:1200px;margin:20px auto;padding:0 16px;display:grid;gap:16px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
-  .card h2{margin:0 0 12px;font-size:15px}
-  form.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
-  label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px;flex:1;min-width:160px}
-  input{padding:9px 10px;border:1px solid var(--line);border-radius:7px;font-size:14px}
-  input:focus{outline:2px solid #9cc0e6;border-color:#9cc0e6}
-  button{padding:9px 16px;border:0;border-radius:7px;background:var(--brand);color:#fff;font-size:14px;cursor:pointer}
-  button.sec{background:#fff;color:var(--brand);border:1px solid var(--brand)}
-  button:disabled{opacity:.5;cursor:default}
-  .msg{font-size:13px;margin-top:10px;min-height:18px}
-  .msg.err{color:var(--bad)} .msg.ok{color:var(--ok)}
-  .hidden{display:none!important}
-  .grid2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
-  @media(max-width:900px){.grid2{grid-template-columns:1fr}}
-  #map{height:420px;border-radius:8px;border:1px solid var(--line)}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-  .chip{background:#eef3f9;border-radius:999px;padding:4px 12px;font-size:12px}
-  table{width:100%;border-collapse:collapse;font-size:13px}
-  th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
-  th{font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}
-  .num{display:inline-flex;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;align-items:center;justify-content:center;font-size:12px}
-  .b{display:inline-block;border-radius:5px;padding:2px 7px;font-size:11px;font-weight:600}
-  .b.po{background:#e3f6ea;color:var(--ok)} .b.ea{background:#fff3d6;color:var(--warn)} .b.ro,.b.no{background:#fde4e1;color:var(--bad)} .b.si{background:#e3f6ea;color:var(--ok)}
-  .restr{border-left:4px solid var(--bad);padding:6px 10px;margin:8px 0;background:#fff7f6;border-radius:0 6px 6px 0;font-size:13px}
-  small.hint{color:var(--muted)}
+:root {
+  color-scheme: light;
+  --bg: #f5f6fb;
+  --card: #ffffff;
+  --ink: #282b44;
+  --muted: #697089;
+  --line: #e5e7f1;
+  --brand: #5c4cdb;
+  --brand-hover: #4938c2;
+  --soft: #eeebff;
+  --ok: #247052;
+  --warn: #8b6015;
+  --bad: #b53c51;
+  --coral: #ee8b77;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.55 "Segoe UI", system-ui, sans-serif; }
+button, input, a { font: inherit; -webkit-tap-highlight-color: transparent; }
+a { color: var(--brand); text-underline-offset: 3px; }
+button, input, a { touch-action: manipulation; }
+button { cursor: pointer; }
+button:disabled { opacity: .5; cursor: default; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #a49aef; outline-offset: 4px; }
+.hidden { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
+.skip { position: fixed; top: -80px; left: 20px; z-index: 10000; background: white; padding: 12px 20px; }
+.skip:focus { top: 15px; }
+.masthead { background: #fff; border-bottom: 1px solid var(--line); }
+.header-inner { max-width: 1440px; margin: auto; min-height: 88px; padding: 0 42px; display: flex; align-items: center; justify-content: space-between; gap: 30px; }
+.brand { display: flex; align-items: center; gap: 12px; color: var(--ink); text-decoration: none; flex-shrink: 0; }
+.brand-mark { width: 39px; height: 39px; background: var(--brand); border-radius: 12px; color: white; display: grid; place-items: center; transform: rotate(-6deg); }
+.brand-mark svg { width: 27px; height: 27px; transform: rotate(6deg); }
+.brand-name { font-size: 28px; line-height: 1; font-weight: 780; letter-spacing: -1.5px; }
+.brand-name span { color: var(--brand); }
+.brand-note { border-left: 1px solid var(--line); padding-left: 14px; font-size: 10px; color: var(--muted); line-height: 1.5; letter-spacing: .8px; }
+.nav { display: flex; gap: 8px; padding: 5px; background: #f5f5fa; border: 1px solid #eeedf5; border-radius: 13px; }
+.tab-btn { border: 0; min-height: 40px; padding: 10px 18px; border-radius: 9px; color: var(--muted); background: transparent; font-size: 12px; font-weight: 650; display: flex; align-items: center; gap: 9px; white-space: nowrap; }
+.tab-btn svg { width: 17px; height: 17px; }
+.tab-btn:hover { color: var(--brand); background: #eeebff; }
+.tab-btn.active { background: white; color: var(--brand); box-shadow: 0 2px 6px #29204d0d; }
+.user { display: flex; gap: 10px; align-items: center; font-size: 11px; color: var(--muted); }
+.user-name { max-width: 180px; }
+.avatar { height: 31px; width: 31px; border: 1px solid #e4defb; border-radius: 50%; color: var(--brand); background: #f3f0ff; display: grid; place-items: center; font-weight: 700; flex-shrink: 0; }
+button.quiet { border: 1px solid var(--line); color: var(--muted); background: white; padding: 7px 11px; border-radius: 8px; font-size: 11px; min-height: 34px; }
+button.quiet:hover { border-color: #ada4e9; color: var(--brand); }
+main { max-width: 1440px; padding: 0 42px 32px; margin: auto; }
+.topline { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 23px 0; font-size: 11px; color: var(--muted); }
+.breadcrumb { display: flex; gap: 11px; align-items: center; }
+.breadcrumb b { color: var(--ink); font-weight: 550; }
+.docs-link { display: inline-flex; align-items: center; gap: 7px; text-decoration: none; font-size: 11px; }
+.docs-link svg { height: 14px; width: 14px; }
+.page-heading { display: flex; justify-content: space-between; align-items: center; gap: 40px; margin: 12px 0 33px; }
+.eyebrow { color: var(--brand); letter-spacing: 1.8px; text-transform: uppercase; font-weight: 700; font-size: 10px; }
+h1 { font-size: clamp(30px, 3.1vw, 43px); font-weight: 720; letter-spacing: -1.8px; line-height: 1.16; margin: 10px 0 12px; max-width: 860px; }
+h2 { font-size: 18px; letter-spacing: -.5px; line-height: 1.35; margin: 0 0 7px; font-weight: 680; }
+h3 { margin: 0 0 8px; font-size: 14px; }
+p { margin: 0; color: var(--muted); }
+.page-heading p { font-size: 13px; max-width: 700px; }
+.heading-note { padding: 13px 0 13px 20px; border-left: 2px solid #d8d1f7; font-size: 11px; min-width: 170px; color: var(--muted); line-height: 1.6; }
+.heading-note b { display: block; color: var(--ink); font-weight: 600; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 17px; padding: 25px; box-shadow: 0 4px 20px #27254a03; min-width: 0; }
+.card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 15px; margin-bottom: 22px; }
+.subtle { font-size: 12px; color: var(--muted); }
+.label-number { color: #8e86ba; font: 11px/1.2 ui-monospace, monospace; letter-spacing: 1px; margin-bottom: 14px; display: block; }
+.pill { display: inline-flex; gap: 6px; align-items: center; border: 1px solid #e1dcf8; border-radius: 6px; background: #f4f1ff; color: #675a9c; font-size: 10px; padding: 5px 9px; white-space: nowrap; }
+button, .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border: 1px solid transparent; border-radius: 10px; background: var(--brand); color: #fff; padding: 11px 18px; font-weight: 600; font-size: 12px; text-decoration: none; transition: background .15s, border-color .15s; }
+button:hover, .button:hover { background: var(--brand-hover); }
+button.sec, .button.sec { border-color: #dddcea; background: #fff; color: var(--ink); }
+button.sec:hover, .button.sec:hover { background: #f5f2ff; border-color: #c5bced; }
+label { font-size: 11px; font-weight: 650; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+input { width: 100%; min-height: 46px; border: 1px solid #dcdeeb; background: #fcfcff; border-radius: 9px; color: var(--ink); padding: 11px 13px; font-size: 13px; font-weight: 400; }
+input::placeholder { color: #9195a8; }
+input:focus { border-color: var(--brand); }
+.msg { font-size: 12px; margin-top: 15px; white-space: pre-line; }
+.msg:empty { display: none; }
+.msg.err { padding: 12px 15px; border-radius: 9px; border: 1px solid #f0d7df; background: #fff1f4; color: var(--bad); }
+.msg.ok { padding: 12px 15px; border-radius: 9px; border: 1px solid #d1e8dd; background: #eef8f3; color: var(--ok); }
+.login-grid { display: grid; grid-template-columns: 1.1fr .9fr; min-height: 500px; border-radius: 23px; overflow: hidden; padding: 0; border: 1px solid #deddf0; }
+.login-art { background: #ece9fd; padding: 42px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; position: relative; }
+.login-art h2 { font-size: 31px; line-height: 1.2; letter-spacing: -1px; max-width: 420px; margin: 14px 0 12px; }
+.login-art p { font-size: 12px; color: #706c8e; max-width: 350px; }
+.art-label { display: inline-block; border: 1px solid #d3ccef; border-radius: 6px; background: #ffffff5c; padding: 5px 9px; font-size: 9px; color: #706797; letter-spacing: 1px; }
+.login-illustration { position: relative; min-height: 210px; margin-top: 27px; }
+.login-illustration svg { width: 100%; height: 210px; }
+.route-ticket { position: absolute; top: 11px; right: 15px; background: white; border: 1px solid #e0daf4; box-shadow: 0 12px 25px #5c4cdb0b; border-radius: 11px; padding: 13px 17px; min-width: 170px; transform: rotate(4deg); }
+.route-ticket small { font-size: 8px; letter-spacing: 1.3px; display: block; color: var(--muted); }
+.route-ticket b { font-size: 12px; font-weight: 600; display: block; margin: 6px 0; }
+.route-ticket span { color: #7b6ba6; font-size: 10px; }
+.login-form { background: #fff; padding: 41px 48px; display: flex; flex-direction: column; justify-content: center; }
+.login-form h2 { font-size: 24px; margin-top: 6px; }
+.login-form form { display: grid; gap: 16px; margin-top: 24px; }
+.login-form button { width: 100%; margin-top: 5px; }
+.login-kicker { color: var(--muted); font-size: 10px; margin-bottom: 4px; }
+.login-help { border-top: 1px solid var(--line); padding-top: 15px; margin-top: 22px; font-size: 10px; color: var(--muted); }
+.route-layout { display: grid; grid-template-columns: 310px minmax(0,1fr); gap: 24px; align-items: start; }
+.search-card { padding: 26px; position: sticky; top: 24px; border-top: 3px solid var(--brand); }
+.search-card .row { display: grid; gap: 12px; margin-top: 24px; }
+.search-card .row label { margin-bottom: 3px; }
+.search-card button { width: 100%; }
+.search-foot { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
+.search-foot b { display: block; font-size: 11px; margin-bottom: 8px; font-weight: 600; }
+.search-foot p { font-size: 11px; line-height: 1.7; }
+.route-canvas { min-width: 0; }
+.empty { padding: 34px 20px; text-align: center; color: var(--muted); }
+.empty strong { display: block; font-size: 15px; font-weight: 600; margin: 16px 0 6px; color: var(--ink); }
+.empty p { font-size: 12px; max-width: 420px; margin: 0 auto; }
+.empty-symbol { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; color: var(--brand); background: var(--soft); margin: 0 auto 13px; font-size: 23px; }
+.route-empty { min-height: 430px; padding: 30px; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at 50% 25%, #f3f0ff, #fff 75%); }
+.route-empty svg { width: min(370px,100%); height: 170px; display: block; margin: 0 auto; }
+.grid2 { display: grid; gap: 20px; }
+.map-card { padding: 23px; }
+#map { height: 370px; background: #f0edf7; border-radius: 12px; border: 1px solid var(--line); z-index: 0; }
+.map-caption { margin-top: 12px; font-size: 11px; color: var(--muted); }
+.stop-card .card-head { align-items: center; flex-wrap: wrap; }
+.chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+.chip { padding: 6px 10px; border: 1px solid #e6e1f5; border-radius: 6px; background: #f5f2ff; color: #6c628b; font-size: 11px; }
+.stop-card .chips { margin: 0; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th,td { text-align: left; padding: 15px 11px; border-bottom: 1px solid #ececf4; vertical-align: top; }
+th { font-size: 9px; text-transform: uppercase; letter-spacing: .8px; color: #777891; white-space: nowrap; background: #f8f8fc; font-weight: 650; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: #fcfbff; }
+td small { color: var(--muted); display: block; margin: 4px 0; font-size: 10px; }
+.num { display: inline-flex; min-width: 26px; height: 26px; align-items: center; justify-content: center; background: var(--soft); color: var(--brand); font-size: 11px; font-weight: 700; border-radius: 50%; }
+.b { display: inline-block; padding: 3px 7px; border-radius: 5px; font-size: 9px; font-weight: 650; white-space: nowrap; }
+.b.po,.b.si { color: var(--ok); background: #e9f5ee; }
+.b.ea { color: var(--warn); background: #fcf2d9; }
+.b.ro,.b.no { color: var(--bad); background: #fbeaf0; }
+.restr { margin-top: 12px; border: 1px solid #efdfd9; border-left: 3px solid var(--coral); background: #fff7f3; padding: 14px; border-radius: 9px; font-size: 12px; }
+.section-space { margin-top: 22px; }
+.restr-card h3 { margin-top: 19px; }
+.import-grid { display: grid; grid-template-columns: 300px minmax(0,1fr); gap: 24px; align-items: start; }
+.import-side { display: grid; gap: 18px; }
+.download-card { background: #eeebff; border-color: #e0d9fa; }
+.download-card p { font-size: 11px; line-height: 1.7; }
+.download-row { display: grid; gap: 9px; margin-top: 18px; }
+.download-row button { justify-content: space-between; width: 100%; background: #ffffffb3; border-color: #dcd5f3; font-size: 11px; }
+.history-card { background: #fff8f4; border-color: #f0e1da; }
+.history-form { display: grid; gap: 10px; margin-top: 18px; }
+.history-form input { background: #fffdfc; }
+.history-card h2 { font-size: 15px; }
+.upload-card { padding: 28px; }
+.file-zone { position: relative; margin: 24px 0 18px; border: 1.5px dashed #c8c1ec; border-radius: 12px; padding: 38px 20px; text-align: center; background: #faf9ff; min-width: 0; display: flex; flex-direction: column; align-items: center; font-weight: 400; cursor: pointer; }
+.file-zone.dragover { border-color: var(--brand); background: #eeebff; }
+.file-zone:focus-within { outline: 3px solid #a49aef; outline-offset: 3px; }
+.file-zone input { position: absolute; inset: 0; opacity: 0; height: 100%; width: 100%; cursor: pointer; }
+.upload-icon { display: grid; place-items: center; width: 45px; height: 52px; background: white; color: var(--brand); border: 1px solid #ded7f4; border-radius: 9px; font-size: 25px; box-shadow: 5px 5px 0 #ede7fc; margin-bottom: 14px; }
+.file-zone strong { font-size: 15px; display: block; margin-bottom: 5px; font-weight: 600; }
+.file-zone span:not(.upload-icon) { font-size: 11px; color: var(--muted); }
+.file-summary { border: 1px solid #ded8f3; background: #f2efff; border-radius: 8px; padding: 11px 13px; font-size: 11px; margin-bottom: 18px; overflow-wrap: anywhere; }
+.actions { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.actions small { color: var(--muted); font-size: 10px; max-width: 250px; }
+.steps-grid { display: flex; gap: 14px; background: #f7f7fc; border-radius: 10px; margin-top: 23px; padding: 16px; }
+.step-box { flex: 1; font-size: 10px; color: var(--muted); position: relative; padding-left: 17px; }
+.step-box strong { display: block; font-size: 11px; color: #585e77; margin-bottom: 3px; font-weight: 600; }
+.step-box::before { content: ''; position: absolute; left: 0; top: 5px; width: 7px; height: 7px; border: 1px solid #bbb8d1; border-radius: 50%; background: white; }
+.step-box.active::before { background: var(--brand); border-color: var(--brand); box-shadow: 0 0 0 3px #e0dafa; }
+.step-box.success::before { background: var(--ok); border-color: var(--ok); }
+.step-box.success strong { color: var(--ok); }
+.step-box.active strong { color: var(--brand); }
+.guide { background: transparent; box-shadow: none; padding: 23px 4px; border: 0; }
+.guide h2 { font-size: 13px; }
+.guide ol { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 30px; list-style: none; padding: 0; margin: 16px 0 0; counter-reset: guides; }
+.guide li { color: var(--muted); font-size: 11px; line-height: 1.7; padding-left: 30px; position: relative; counter-increment: guides; }
+.guide li::before { content: '0' counter(guides); position: absolute; top: 0; left: 0; color: #968bb9; font: 11px/1.8 ui-monospace, monospace; }
+.guide strong { display: block; color: #565972; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+.guide > p { font-size: 10px; margin-top: 15px; color: #7d8196; }
+.results-card { padding: 0; overflow: hidden; }
+.results-head { padding: 23px 26px 0; display: flex; justify-content: space-between; align-items: start; gap: 20px; flex-wrap: wrap; }
+.results-card > .chips { padding: 0 26px; margin: 16px 0 8px; }
+.results-card .table-wrap { padding: 0 15px 10px; }
+.results-card .empty { padding: 34px 20px 42px; }
+.pager { display: flex; justify-content: flex-end; gap: 12px; align-items: center; padding: 15px 26px; border-top: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.pager button { min-height: 34px; padding: 6px 11px; color: var(--ink); background: white; border-color: var(--line); font-size: 10px; }
+.footnote { margin-top: 35px; padding-top: 20px; border-top: 1px solid var(--line); color: #8b8ea2; font-size: 10px; display: flex; justify-content: space-between; gap: 15px; }
+.footnote a { color: #76718f; }
+.loading::before { content: ''; width: 12px; height: 12px; border: 2px solid #ffffff70; border-top-color: white; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation-duration: 2s !important; } }
+@media (max-width:1100px) {
+  .header-inner { padding: 0 26px; gap: 18px; }
+  .brand-note { display: none; }
+  main { padding-left: 26px; padding-right: 26px; }
+  .route-layout { grid-template-columns: 270px minmax(0,1fr); gap: 18px; }
+  .import-grid { grid-template-columns: 260px minmax(0,1fr); gap: 18px; }
+  .login-form { padding: 35px; }
+  .login-art { padding: 35px; }
+  .user-name { max-width: 130px; }
+  .guide ol { gap: 18px; }
+}
+@media (max-width:800px) {
+  .header-inner { flex-wrap: wrap; padding: 19px 24px 15px; gap: 17px; }
+  .header-nav { order: 3; width: 100%; }
+  .nav { width: max-content; max-width: 100%; }
+  .user-name { max-width: none; }
+  .heading-note { display: none; }
+  .page-heading { margin-top: 5px; }
+  .route-layout { grid-template-columns: 1fr; }
+  .search-card { position: static; }
+  .search-card .row { display: grid; grid-template-columns: 1fr auto auto; align-items: end; gap: 10px; margin-top: 18px; }
+  .search-card .row label { margin-bottom: 0; }
+  .search-foot { display: none; }
+  .route-empty { min-height: 350px; }
+  .import-grid { grid-template-columns: 1fr; }
+  .import-side { grid-template-columns: 1fr 1fr; }
+  .upload-card { order: -1; }
+  .download-row { grid-template-columns: 1fr; }
+  .guide ol { gap: 20px; }
+  .login-grid { grid-template-columns: 1fr 1fr; }
+  .login-art { padding: 28px; }
+  .login-art h2 { font-size: 26px; }
+  .route-ticket { right: 0; top: 25px; min-width: 145px; padding: 12px; }
+  .login-form { padding: 28px; }
+}
+@media (max-width:580px) {
+  .header-inner { padding: 16px 19px; gap: 15px; }
+  .brand-name { font-size: 25px; }
+  .brand-mark { width: 34px; height: 34px; border-radius: 10px; }
+  .avatar { display: none; }
+  .user { gap: 7px; font-size: 10px; }
+  .user-name { max-width: 135px; }
+  button.quiet { font-size: 10px; padding: 6px 8px; }
+  main { padding: 0 18px 25px; }
+  .topline { padding: 18px 0; font-size: 10px; }
+  .docs-link { font-size: 10px; }
+  .breadcrumb { gap: 7px; }
+  .page-heading { margin-bottom: 24px; }
+  h1 { font-size: 31px; letter-spacing: -1.3px; margin-bottom: 11px; }
+  .page-heading p { font-size: 12px; }
+  .eyebrow { font-size: 9px; letter-spacing: 1.5px; }
+  .nav { width: 100%; padding: 4px; }
+  .tab-btn { flex: 1; justify-content: center; padding: 9px 12px; font-size: 11px; }
+  .login-grid { grid-template-columns: 1fr; border-radius: 16px; }
+  .login-art { min-height: 220px; padding: 25px; }
+  .login-art h2 { font-size: 27px; max-width: 290px; }
+  .login-art > p { max-width: none; }
+  .login-illustration { display: none; }
+  .login-form { padding: 28px 25px; }
+  .login-form h2 { font-size: 22px; }
+  .card { padding: 21px; border-radius: 13px; }
+  .search-card .row { grid-template-columns: 1fr 1fr; }
+  .search-card .row label { grid-column: 1/-1; }
+  .search-card button { padding: 10px; font-size: 11px; }
+  .route-empty { min-height: 320px; }
+  .route-empty svg { height: 140px; }
+  .map-card .card-head { flex-wrap: wrap; }
+  #map { height: 300px; }
+  .card-head { margin-bottom: 18px; }
+  .stop-card .card-head { gap: 10px; }
+  .stop-card .chips { gap: 5px; }
+  .chip { font-size: 10px; }
+  .import-side { grid-template-columns: 1fr; }
+  .download-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .download-row button { font-size: 10px; padding: 10px; }
+  .actions { flex-wrap: wrap; gap: 15px; }
+  .actions button { width: 100%; order: -1; }
+  .actions small { text-align: center; max-width: none; width: 100%; }
+  .file-zone { padding: 31px 13px; }
+  .file-zone strong { font-size: 14px; }
+  .steps-grid { gap: 9px; padding: 14px 10px; }
+  .step-box { padding-left: 12px; font-size: 9px; }
+  .step-box strong { font-size: 10px; }
+  .step-box::before { height: 5px; width: 5px; }
+  .guide { padding: 20px 2px 0; }
+  .guide ol { grid-template-columns: 1fr; gap: 14px; margin-top: 16px; }
+  .results-card { padding: 0; }
+  .results-head { padding: 21px 21px 0; }
+  .results-card > .chips { padding: 0 21px; }
+  .pager { padding: 14px; gap: 7px; justify-content: space-between; }
+  .footnote { flex-wrap: wrap; gap: 8px; font-size: 9px; margin-top: 26px; }
+}
 </style>
 </head>
 <body>
-<header>
-  <h1>🚌 Rutas y trayectos</h1>
-  <div class="user"><span id="quien"></span> <button id="salir" class="sec hidden" style="padding:4px 10px;font-size:12px">Salir</button></div>
+<a class="skip" href="#contenido">Saltar al contenido</a>
+<header class="masthead">
+  <div class="header-inner">
+    <a class="brand" href="/rutas.html" aria-label="Rutas, inicio">
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="6" cy="6" r="2" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="18" r="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 6h6a4 4 0 1 1 0 8h-4a2 2 0 0 0 0 4h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+      <span class="brand-name">rutas<span>.</span></span>
+      <span class="brand-note">PLANIFICA. CONECTA.<br>SIGUE EN MOVIMIENTO.</span>
+    </a>
+    <div id="sidebarMenu" class="header-nav hidden">
+      <nav class="nav" role="tablist" aria-label="Gestión de trayectos">
+        <button class="tab-btn active" id="btnTabConsulta" type="button" role="tab" aria-selected="true" aria-controls="seccionConsulta"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6ZM9 3v15m6-12v15" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Explorar rutas</button>
+        <button class="tab-btn" id="btnTabCargue" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="seccionCargue"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3H5v18h14V8l-5-5Zm0 0v5h5M8 13h8m-8 4h8" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Importar trayectos</button>
+      </nav>
+    </div>
+    <div class="user"><span class="avatar" aria-hidden="true">R</span><span class="user-name" id="quien">Tu espacio de movilidad</span><button type="button" id="salir" class="quiet hidden">Cerrar sesión</button></div>
+  </div>
 </header>
+<main id="contenido">
+  <div class="topline"><div class="breadcrumb"><span>Espacio de trabajo</span><span aria-hidden="true">/</span><b id="breadcrumb">Bienvenida</b></div><a class="docs-link" href="/swagger-ui.html" target="_blank" rel="noopener">Documentación API <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M5 3h8v8M13 3 3 13" stroke="currentColor" stroke-width="1.4"/></svg></a></div>
+  <div class="page-heading"><div><div class="eyebrow" id="pageEyebrow">EL PUNTO DE PARTIDA DE TU OPERACIÓN</div><h1 id="pageTitle">Cada conexión empieza con una ruta.</h1><p id="pageDescription">Explora tus recorridos, conecta sus paradas y organiza nuevos trayectos desde Excel.</p></div><div class="heading-note"><b>Todo el recorrido.</b>Una sola perspectiva.</div></div>
 
-<main>
-  <section class="card" id="loginCard">
-    <h2>Iniciar sesión</h2>
-    <form class="row" id="loginForm" autocomplete="off">
-      <label>Usuario (login)<input id="usuario" required></label>
-      <label>Contraseña<input id="clave" type="password" required></label>
-      <label>APIKey<input id="apikey" required></label>
-      <button type="submit">Ingresar</button>
-    </form>
-    <div class="msg" id="loginMsg"></div>
+  <section class="card login-grid" id="loginCard" aria-labelledby="loginTitle">
+    <div class="login-art" aria-hidden="true">
+      <div><span class="art-label">RUTAS · CENTRO DE OPERACIONES</span><h2>Un nuevo punto de vista para cada recorrido.</h2><p>Desde la primera parada hasta el último trayecto, encuentra tu operación en un mismo espacio.</p></div>
+      <div class="login-illustration"><svg viewBox="0 0 480 230" fill="none"><path d="M15 195H465M15 112H465M110 15v205M255 15v205M400 15v205" stroke="#e2dcf7" stroke-width="20"/><path d="M45 178h90V65h153v105h122" stroke="white" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M45 178h90V65h153v105h122" stroke="#8575db" stroke-width="3" stroke-dasharray="5 7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="45" cy="178" r="13" fill="#5c4cdb" stroke="white" stroke-width="5"/><circle cx="135" cy="65" r="11" fill="#ee8b77" stroke="white" stroke-width="5"/><circle cx="288" cy="170" r="11" fill="#ee8b77" stroke="white" stroke-width="5"/><circle cx="410" cy="170" r="13" fill="#5c4cdb" stroke="white" stroke-width="5"/></svg><div class="route-ticket"><small>TU SIGUIENTE DESTINO</small><b>Una operación conectada</b><span>Rutas · Paradas · Trayectos</span></div></div>
+    </div>
+    <div class="login-form"><div class="login-kicker">QUÉ BUENO VERTE POR AQUÍ</div><h2 id="loginTitle">Entra y toma el control.</h2><p class="subtle">Usa las credenciales de tu cuenta para continuar.</p><form id="loginForm"><label for="usuario">Usuario<input id="usuario" autocomplete="username" placeholder="Tu usuario" required></label><label for="clave">Contraseña<input id="clave" type="password" autocomplete="current-password" placeholder="Tu contraseña" required></label><label for="apikey">APIKey<input id="apikey" type="password" autocomplete="off" placeholder="La clave de acceso de tu cuenta" required></label><button type="submit" id="btnLogin">Iniciar sesión <span aria-hidden="true">↗</span></button></form><div class="msg" id="loginMsg" role="status" aria-live="polite"></div><div class="login-help">Tu acceso reúne las consultas de rutas y las importaciones de Excel.</div></div>
   </section>
 
-  <section class="card hidden" id="buscarCard">
-    <h2>Consultar ruta</h2>
-    <form class="row" id="rutaForm">
-      <label>Código de ruta<input id="codigo" placeholder="Ej. T-001" required></label>
-      <button type="submit">Ver trayectos</button>
-      <button type="button" class="sec" id="btnRestr">Rutas con restricciones</button>
-    </form>
-    <div class="msg" id="rutaMsg"></div>
-  </section>
-
-  <section class="grid2 hidden" id="resultado">
-    <div class="card">
-      <h2 id="titulo">Trayectos</h2>
-      <div class="chips" id="chips"></div>
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>#</th><th>Ubicación</th><th>Conductor</th><th>Vehículo</th></tr></thead>
-          <tbody id="filas"></tbody>
-        </table>
+  <div id="appContainer" class="hidden">
+    <section id="seccionConsulta" role="tabpanel" aria-labelledby="btnTabConsulta">
+      <div class="route-layout">
+        <section class="card search-card"><span class="label-number">01 / ENCUENTRA TU RECORRIDO</span><h2>¿Qué ruta exploramos?</h2><p class="subtle">Busca por código para ver sus paradas y condiciones de operación.</p><form class="row" id="rutaForm"><label for="codigo">Código de ruta<input id="codigo" placeholder="Por ejemplo, T-001" required></label><button id="btnBuscar" type="submit">Explorar ruta <span aria-hidden="true">→</span></button><button class="sec" id="btnRestr" type="button">Consultar restricciones</button></form><div class="msg" id="rutaMsg" role="status" aria-live="polite"></div><div class="search-foot"><b>Más contexto para cada parada</b><p>Revisa el orden del recorrido, el conductor asignado y la habilitación del vehículo.</p></div></section>
+        <div class="route-canvas">
+          <div class="card route-empty" id="consultaVacia"><div class="empty"><svg viewBox="0 0 370 170" fill="none" aria-hidden="true"><rect x="19" y="12" width="330" height="146" rx="19" fill="#f0ecff"/><path d="M23 61h321M23 112h321M102 15v140M264 15v140" stroke="#e4def6" stroke-width="13"/><path d="M70 125h72V48h96v70h64" stroke="white" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/><path d="M70 125h72V48h96v70h64" stroke="#9c8ce5" stroke-width="2" stroke-dasharray="5 6"/><circle cx="70" cy="125" r="9" fill="#5c4cdb" stroke="white" stroke-width="4"/><circle cx="238" cy="48" r="8" fill="#ee8b77" stroke="white" stroke-width="4"/><circle cx="302" cy="118" r="9" fill="#5c4cdb" stroke="white" stroke-width="4"/></svg><strong>Hay un recorrido por descubrir.</strong><p>Escribe un código de ruta y encuentra aquí el mapa, las paradas y sus responsables.</p></div></div>
+          <div class="grid2 hidden" id="resultado">
+            <section class="card map-card"><div class="card-head"><div><span class="label-number">EL RECORRIDO DE UN VISTAZO</span><h2>Conecta los puntos.</h2><p class="subtle">Ubicaciones disponibles de las paradas de tu ruta.</p></div><span class="pill">OpenStreetMap</span></div><div id="map" role="region" aria-label="Mapa de las paradas de la ruta"></div><div class="map-caption" id="mapHint"></div></section>
+            <section class="card stop-card"><div class="card-head"><div><span class="label-number">PARADA A PARADA</span><h2 id="titulo">Detalle del recorrido</h2></div><div class="chips" id="chips"></div></div><div class="table-wrap"><table><caption class="sr-only">Paradas, conductores y vehículos de la ruta consultada</caption><thead><tr><th scope="col">Orden</th><th scope="col">Ubicación</th><th scope="col">Conductor</th><th scope="col">Vehículo</th></tr></thead><tbody id="filas"></tbody></table></div></section>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="card">
-      <h2>Mapa</h2>
-      <div id="map"></div>
-      <small class="hint" id="mapHint"></small>
-    </div>
-  </section>
+      <section class="card section-space restr-card hidden" id="restrCard"><span class="label-number">ATENCIÓN EN EL RECORRIDO</span><h2>Rutas con restricciones</h2><p class="subtle">Vehículos sin habilitar o conductores restringidos para operar.</p><div id="restrLista"></div></section>
+    </section>
 
-  <section class="card hidden" id="restrCard">
-    <h2>Rutas con vehículo no habilitado o conductor restringido</h2>
-    <div id="restrLista"></div>
-  </section>
+    <section id="seccionCargue" class="hidden" role="tabpanel" aria-labelledby="btnTabCargue">
+      <div class="import-grid">
+        <div class="import-side">
+          <section class="card download-card"><span class="label-number">01 / PREPARA</span><h2>Empieza con el formato correcto.</h2><p>Una plantilla vacía para tus datos, o un ejemplo con tres paradas para orientarte.</p><div class="download-row"><button class="sec" id="btnPlantilla" type="button">Plantilla vacía <span aria-hidden="true">↓</span></button><button class="sec" id="btnEjemplo" type="button">Excel de ejemplo <span aria-hidden="true">↓</span></button></div></section>
+          <section class="card history-card"><span class="label-number">VUELVE A UN CARGUE ANTERIOR</span><h2>Recupera sus resultados.</h2><p class="subtle">Introduce el ID de tu importación.</p><form id="consultaCargueForm" class="history-form"><label class="sr-only" for="idCargue">Identificador del cargue</label><input id="idCargue" inputmode="numeric" pattern="[0-9]{12}" maxlength="12" placeholder="Ej. 202610191530" required aria-label="Identificador del cargue, 12 dígitos"><button class="sec" id="btnConsultarCargue" type="submit">Consultar cargue <span aria-hidden="true">→</span></button></form></section>
+        </div>
+        <section class="card upload-card"><div class="card-head"><div><span class="label-number">02 / IMPORTA</span><h2>Tu siguiente recorrido empieza en Excel.</h2><p class="subtle">Agrega paradas de una o varias rutas desde un solo archivo.</p></div><span class="pill">.xlsx / .xls</span></div><form id="uploadForm"><label class="file-zone" id="dropZone" for="excelFile"><span class="upload-icon" aria-hidden="true">↥</span><strong>Tu archivo tiene un lugar aquí.</strong><span>Arrástralo o haz clic para seleccionarlo.</span><span>Excel .xlsx o .xls · Máximo 10 MB</span><input id="excelFile" type="file" accept=".xlsx,.xls" required aria-label="Seleccionar archivo Excel de trayectos" aria-describedby="archivoInfo"></label><div id="archivoInfo" class="file-summary hidden" role="status"></div><div class="actions"><small>Se revisará cada fila antes de agregar los trayectos válidos.</small><button id="btnImportar" type="submit">Importar trayectos <span aria-hidden="true">↗</span></button></div></form><div class="msg" id="cargueMsg" role="status" aria-live="polite"></div><div class="steps-grid" aria-label="Estado de la importación"><div class="step-box" id="step1"><strong>Leer archivo</strong>Recibir los trayectos</div><div class="step-box" id="step2"><strong>Validar datos</strong>Revisar cada parada</div><div class="step-box" id="step3"><strong>Agregar trayectos</strong>Guardar filas válidas</div></div></section>
+      </div>
+      <aside class="card guide"><h2>Antes de enviar tu archivo</h2><ol><li><strong>Una fila, una parada.</strong>Completa ruta, orden, ubicación, identificación del conductor y placa.</li><li><strong>Todo listo para operar.</strong>El conductor y el vehículo deben estar registrados y autorizados, con documentos vigentes y habilitados.</li><li><strong>Cada parada tiene su orden.</strong>Puedes empezar en 0. Evita repetir la misma ruta y orden en el archivo o la aplicación.</li></ol><p>La segunda hoja del Excel incluye una guía. El nombre y la edad del conductor son opcionales.</p></aside>
+      <section class="card section-space results-card" id="resultadosCargue"><div class="results-head"><div><span class="label-number">03 / REVISA</span><h2>De tu archivo a tus rutas.</h2><p class="subtle" id="resumenTexto">Aquí verás qué filas se agregaron y cuáles necesitan revisión.</p></div><span class="pill hidden" id="resultadoId"></span></div><div class="chips" id="cargueChips"></div><div id="cargueVacio" class="empty"><div class="empty-symbol" aria-hidden="true">≡</div><strong>El resultado de tu próximo recorrido.</strong><p>Importa un archivo o consulta un cargue anterior para ver el detalle de cada fila.</p></div><div id="tablaCargue" class="table-wrap hidden"><table><caption class="sr-only">Filas importadas con su estado y motivos de rechazo</caption><thead><tr><th scope="col">Ruta / orden</th><th scope="col">Ubicación</th><th scope="col">Vehículo / conductor</th><th scope="col">Resultado</th><th scope="col">Detalle</th></tr></thead><tbody id="cargueFilas"></tbody></table></div><div class="pager hidden" id="paginacion"><button type="button" id="paginaAnterior">← Anterior</button><span id="paginaTexto" aria-live="polite"></span><button type="button" id="paginaSiguiente">Siguiente →</button></div></section>
+    </section>
+  </div>
+  <footer class="footnote"><span>Rutas y trayectos · PPOOII / Laboratorio 4</span><a href="/swagger-ui.html" target="_blank" rel="noopener">Explorar la API en Swagger ↗</a></footer>
 </main>
-
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-(function () {
-  var token = null, map = null, capa = null;
-  var $ = function (id) { return document.getElementById(id); };
-
-  function show(id, v) { $(id).classList.toggle('hidden', !v); }
-  function msg(id, text, cls) { var e = $(id); e.textContent = text || ''; e.className = 'msg ' + (cls || ''); }
-  function el(tag, text, cls) { var e = document.createElement(tag); if (text !== undefined && text !== null) e.textContent = text; if (cls) e.className = cls; return e; }
-
-  function api(path, opts) {
-    opts = opts || {}; opts.headers = opts.headers || {};
-    if (token) opts.headers['Authorization'] = token;
-    return fetch(path, opts).then(function (r) {
-      return r.text().then(function (t) {
-        var body = null; try { body = t ? JSON.parse(t) : null; } catch (e) {}
-        if (!r.ok) {
-          if (r.status === 403) { cerrarSesion('La sesión expiró o el token no es válido. Ingrese de nuevo.'); }
-          throw new Error((body && body.error) || (r.status === 403 ? 'Acceso denegado (403).' : 'Error ' + r.status));
-        }
-        return body;
-      });
-    });
-  }
-
-  // ---------- Login ----------
-  $('loginForm').addEventListener('submit', function (ev) {
-    ev.preventDefault(); msg('loginMsg', 'Ingresando…');
-    fetch('/authenticate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'APIkey': $('apikey').value.trim() },
-      body: JSON.stringify({ username: $('usuario').value.trim(), password: $('clave').value })
-    }).then(function (r) {
-      if (!r.ok) throw new Error('Usuario o APIKey incorrectos.');
-      return r.json();
-    }).then(function (j) {
-      token = j.token.indexOf('Bearer ') === 0 ? j.token : 'Bearer ' + j.token;
-      $('quien').textContent = '👤 ' + $('usuario').value.trim();
-      $('clave').value = ''; $('apikey').value = '';
-      show('loginCard', false); show('buscarCard', true); show('salir', true); msg('loginMsg', '');
-      $('codigo').focus();
-    }).catch(function (e) { msg('loginMsg', e.message, 'err'); });
-  });
-
-  function cerrarSesion(texto) {
-    token = null; $('quien').textContent = '';
-    show('salir', false); show('buscarCard', false); show('resultado', false); show('restrCard', false); show('loginCard', true);
-    msg('loginMsg', texto || '', texto ? 'err' : '');
-  }
-  $('salir').addEventListener('click', function () { cerrarSesion(); });
-
-  // ---------- Consulta de una ruta ----------
-  $('rutaForm').addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    var codigo = $('codigo').value.trim(); if (!codigo) return;
-    msg('rutaMsg', 'Consultando…'); show('restrCard', false);
-    api('/LaboratorioV3/rutas/' + encodeURIComponent(codigo)).then(function (ruta) {
-      msg('rutaMsg', ''); pintarRuta(ruta);
-    }).catch(function (e) { show('resultado', false); msg('rutaMsg', e.message, 'err'); });
-  });
-
-  function badge(texto, cls) { return el('span', texto, 'b ' + cls); }
-
-  function pintarRuta(ruta) {
-    show('resultado', true);
-    $('titulo').textContent = 'Ruta ' + ruta.codigoRuta;
-    var chips = $('chips'); chips.textContent = '';
-    var conductores = {}, placas = {}, conCoord = 0;
-    ruta.trayectos.forEach(function (t) {
-      conductores[t.identificacionConductor] = 1; placas[t.placa] = 1;
-      if (t.latitud !== null && t.longitud !== null) conCoord++;
-    });
-    chips.appendChild(el('span', ruta.totalTrayectos + ' trayecto(s)', 'chip'));
-    chips.appendChild(el('span', Object.keys(conductores).length + ' conductor(es)', 'chip'));
-    chips.appendChild(el('span', Object.keys(placas).length + ' vehículo(s)', 'chip'));
-
-    var tb = $('filas'); tb.textContent = '';
-    ruta.trayectos.forEach(function (t) {
-      var tr = el('tr');
-      var c1 = el('td'); c1.appendChild(el('span', t.orden, 'num')); tr.appendChild(c1);
-      tr.appendChild(el('td', t.ubicacion));
-      var c3 = el('td'); c3.appendChild(el('div', t.nombreConductor || '(sin nombre)'));
-      c3.appendChild(el('small', 'ID ' + t.identificacionConductor + ' ', 'hint'));
-      var est = t.estadoConductor;
-      c3.appendChild(badge(est ? est : 'Sin relación', est === 'PO' ? 'po' : est === 'EA' ? 'ea' : 'ro'));
-      tr.appendChild(c3);
-      var c4 = el('td'); c4.appendChild(el('div', t.placa));
-      c4.appendChild(badge(t.vehiculoHabilitado ? 'Habilitado' : 'No habilitado', t.vehiculoHabilitado ? 'si' : 'no'));
-      tr.appendChild(c4);
-      tb.appendChild(tr);
-    });
-    pintarMapa(ruta.trayectos, conCoord);
-  }
-
-  function pintarMapa(trayectos, conCoord) {
-    if (typeof L === 'undefined') { $('map').textContent = 'No se pudo cargar el mapa (sin conexión a la librería Leaflet).'; return; }
-    if (!map) {
-      map = L.map('map');
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
-    }
-    if (capa) { map.removeLayer(capa); }
-    capa = L.layerGroup().addTo(map);
-    var pts = [];
-    trayectos.forEach(function (t) {
-      if (t.latitud === null || t.longitud === null) return;
-      var p = [t.latitud, t.longitud]; pts.push(p);
-      var icon = L.divIcon({ className: '', html: '<span class="num">' + t.orden + '</span>', iconSize: [24, 24], iconAnchor: [12, 12] });
-      var m = L.marker(p, { icon: icon }).addTo(capa);
-      var pop = document.createElement('div'); pop.textContent = t.orden + '. ' + t.ubicacion; m.bindPopup(pop);
-    });
-    if (pts.length > 1) L.polyline(pts, { color: '#1f4e78', weight: 3, opacity: .7 }).addTo(capa);
-    if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.2)); else map.setView([4.4389, -75.2322], 12);
-    $('mapHint').textContent = pts.length === trayectos.length ? '' :
-      (trayectos.length - pts.length) + ' trayecto(s) aún sin coordenadas: una tarea programada las completa con Google Maps cada 90 segundos.';
-    setTimeout(function () { map.invalidateSize(); }, 50);
-  }
-
-  // ---------- Rutas con restricciones ----------
-  $('btnRestr').addEventListener('click', function () {
-    msg('rutaMsg', 'Consultando…'); show('resultado', false);
-    api('/LaboratorioV3/rutas/restricciones').then(function (rutas) {
-      msg('rutaMsg', ''); var cont = $('restrLista'); cont.textContent = '';
-      if (!rutas.length) cont.appendChild(el('p', 'No hay rutas con restricciones. ✅'));
-      rutas.forEach(function (r) {
-        cont.appendChild(el('h3', 'Ruta ' + r.codigoRuta, ''));
-        r.trayectos.forEach(function (t) {
-          cont.appendChild(el('div', t.orden + '. ' + t.ubicacion + ' — ' + t.placa + ' / ' + t.identificacionConductor + ' → ' + t.motivo, 'restr'));
-        });
-      });
-      show('restrCard', true);
-    }).catch(function (e) { msg('rutaMsg', e.message, 'err'); });
-  });
-})();
+'use strict';
+var token=null,currentApiKey=null,map=null,capa=null,pagina=0,totalPaginas=0,cargueActual=null,sessionVersion=0;
+var $=id=>document.getElementById(id);
+function show(id,v){$(id).classList.toggle('hidden',!v);}
+function msg(id,text,cls){var node=$(id);node.textContent=text||'';node.className='msg '+(cls||'');}
+function el(tag,text,cls){var node=document.createElement(tag);if(text!=null)node.textContent=text;if(cls)node.className=cls;return node;}
+function busy(id,loading,text){var b=$(id);if(loading){b.dataset.original=b.innerHTML;b.textContent=text;b.classList.add('loading');}else{b.innerHTML=b.dataset.original||b.innerHTML;b.classList.remove('loading');}b.disabled=loading;b.setAttribute('aria-busy',String(loading));}
+async function api(path,opts){opts=opts||{};opts.headers=opts.headers||{};if(token)opts.headers.Authorization=token;if(currentApiKey)opts.headers.APIkey=currentApiKey;var version=sessionVersion;var r=await fetch(path,opts);var text=await r.text();var body;try{body=text?JSON.parse(text):null;}catch(e){body=null;}if(version!==sessionVersion)throw new Error('La sesión cambió. Vuelve a iniciar la operación.');if(!r.ok){if(r.status===401||r.status===403)cerrarSesion('La sesión expiró. Inicia sesión de nuevo.');throw new Error((body&&(body.error||body.message))||'No se pudo completar la solicitud ('+r.status+').');}return body;}
+function cambiarPestaña(tipo){var consulta=tipo==='consulta';[['btnTabConsulta',consulta],['btnTabCargue',!consulta]].forEach(function(pair){$(pair[0]).classList.toggle('active',pair[1]);$(pair[0]).setAttribute('aria-selected',String(pair[1]));$(pair[0]).tabIndex=pair[1]?0:-1;});show('seccionConsulta',consulta);show('seccionCargue',!consulta);$('breadcrumb').textContent=consulta?'Consultar rutas':'Importar Excel';$('pageEyebrow').textContent=consulta?'EXPLORA · CONECTA · ORGANIZA':'IMPORTACIONES DE EXCEL';$('pageTitle').textContent=consulta?'Tu recorrido, desde otra perspectiva.':'Nuevos trayectos, a un archivo de distancia.';$('pageDescription').textContent=consulta?'Encuentra las paradas de una ruta y revisa sus condiciones de operación.':'Importa nuevas paradas desde Excel y revisa el resultado de cada fila.';if(consulta&&map)setTimeout(()=>map.invalidateSize(),100);}
+$('btnTabConsulta').onclick=()=>cambiarPestaña('consulta');$('btnTabCargue').onclick=()=>cambiarPestaña('cargue');
+['btnTabConsulta','btnTabCargue'].forEach(id=>$(id).addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key)){e.preventDefault();var target=e.key==='Home'?'consulta':e.key==='End'?'cargue':id==='btnTabConsulta'?'cargue':'consulta';cambiarPestaña(target);$(target==='consulta'?'btnTabConsulta':'btnTabCargue').focus();}}));
+$('loginForm').addEventListener('submit',async function(e){e.preventDefault();busy('btnLogin',true,'Ingresando…');msg('loginMsg','');try{var key=$('apikey').value.trim();var response=await fetch('/authenticate',{method:'POST',headers:{'Content-Type':'application/json',APIkey:key},body:JSON.stringify({username:$('usuario').value.trim(),password:$('clave').value})});if(!response.ok)throw new Error(response.status>=500?'El servicio no está disponible. Inténtalo de nuevo.':'Revisa tu usuario, contraseña y APIKey.');var data=await response.json();token=data.token.startsWith('Bearer ')?data.token:'Bearer '+data.token;currentApiKey=key;sessionVersion++;$('quien').textContent=$('usuario').value.trim();$('clave').value='';$('apikey').value='';show('loginCard',false);show('appContainer',true);show('sidebarMenu',true);show('salir',true);cambiarPestaña('consulta');$('codigo').focus();}catch(error){msg('loginMsg',error.message==='Failed to fetch'?'No hay conexión con el servidor. Inténtalo de nuevo.':error.message,'err');}finally{busy('btnLogin',false);}});
+function cerrarSesion(text){sessionVersion++;token=null;currentApiKey=null;$('quien').textContent='Acceso al espacio de trabajo';$('clave').value='';$('apikey').value='';show('appContainer',false);show('sidebarMenu',false);show('salir',false);show('loginCard',true);show('resultado',false);show('restrCard',false);show('consultaVacia',true);['filas','restrLista','cargueFilas','cargueChips'].forEach(id=>$(id).textContent='');$('excelFile').value='';$('idCargue').value='';show('archivoInfo',false);show('tablaCargue',false);show('cargueVacio',true);show('paginacion',false);show('resultadoId',false);$('resumenTexto').textContent='Aquí verás qué filas se agregaron y cuáles necesitan revisión.';cargueActual=null;msg('rutaMsg','');msg('cargueMsg','');pasos('','','');$('pageTitle').textContent='Cada conexión empieza con una ruta.';$('pageDescription').textContent='Consulta tus rutas y agrega nuevos trayectos desde un solo lugar.';$('pageEyebrow').textContent='EL PUNTO DE PARTIDA DE TU OPERACIÓN';$('breadcrumb').textContent='Bienvenida';msg('loginMsg',text||'',text?'err':'');$('usuario').focus();}
+$('salir').onclick=()=>cerrarSesion();
+function badge(text,cls){return el('span',text,'b '+cls);}
+$('rutaForm').addEventListener('submit',async e=>{e.preventDefault();var code=$('codigo').value.trim();if(!code)return;busy('btnBuscar',true,'Consultando…');msg('rutaMsg','');show('restrCard',false);try{pintarRuta(await api('/LaboratorioV3/rutas/'+encodeURIComponent(code)));}catch(error){show('resultado',false);show('consultaVacia',true);msg('rutaMsg',error.message,'err');}finally{busy('btnBuscar',false);}});
+function pintarRuta(ruta){show('resultado',true);show('consultaVacia',false);$('titulo').textContent='Ruta '+ruta.codigoRuta;$('chips').textContent='';var conductores=new Set(),placas=new Set();ruta.trayectos.forEach(t=>{conductores.add(t.identificacionConductor);placas.add(t.placa);});[ruta.totalTrayectos+' paradas',conductores.size+' conductores',placas.size+' vehículos'].forEach(text=>$('chips').append(el('span',text,'chip')));$('filas').textContent='';ruta.trayectos.forEach(t=>{var tr=el('tr'),order=el('td');order.append(el('span',t.orden,'num'));tr.append(order,el('td',t.ubicacion));var driver=el('td');driver.append(el('div',t.nombreConductor||'Sin nombre'),el('small','ID '+t.identificacionConductor));var labels={PO:'Puede operar',EA:'En aprobación',RO:'Restringido'};driver.append(badge(labels[t.estadoConductor]||'Sin relación',t.estadoConductor==='PO'?'po':t.estadoConductor==='EA'?'ea':'ro'));var car=el('td');car.append(el('div',t.placa),badge(t.vehiculoHabilitado?'Habilitado':'Sin habilitar',t.vehiculoHabilitado?'si':'no'));tr.append(driver,car);$('filas').append(tr);});pintarMapa(ruta.trayectos);}
+function pintarMapa(trayectos){if(typeof L==='undefined'){$('map').textContent='El mapa no está disponible. Puedes consultar todas las paradas en la tabla.';return;}if(!map){map=L.map('map');L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);}if(capa)map.removeLayer(capa);capa=L.layerGroup().addTo(map);var points=[];trayectos.forEach(t=>{if(t.latitud==null||t.longitud==null||!Number.isFinite(t.latitud)||!Number.isFinite(t.longitud))return;var p=[t.latitud,t.longitud];points.push(p);var icon=L.divIcon({className:'',html:'<span class="num">'+Number(t.orden)+'</span>',iconSize:[27,27],iconAnchor:[13,13]});var popup=el('div',t.orden+'. '+t.ubicacion);L.marker(p,{icon:icon}).addTo(capa).bindPopup(popup);});if(points.length>1)L.polyline(points,{color:getComputedStyle(document.documentElement).getPropertyValue('--brand').trim(),weight:4,opacity:.75}).addTo(capa);if(points.length)map.fitBounds(L.latLngBounds(points).pad(.2),{maxZoom:16});else map.setView([4.4389,-75.2322],12);$('mapHint').textContent=points.length===trayectos.length?'Las líneas unen las paradas; no representan indicaciones de navegación.':(trayectos.length-points.length)+' paradas pendientes de coordenadas. La tabla incluye el recorrido completo.';setTimeout(()=>map.invalidateSize(),100);}
+$('btnRestr').onclick=async()=>{busy('btnRestr',true,'Revisando…');msg('rutaMsg','');try{var rutas=await api('/LaboratorioV3/rutas/restricciones');$('restrLista').textContent='';if(!rutas.length)$('restrLista').append(el('p','No hay rutas con restricciones.','msg ok'));rutas.forEach(r=>{$('restrLista').append(el('h3','Ruta '+r.codigoRuta));r.trayectos.forEach(t=>$('restrLista').append(el('div',t.orden+'. '+t.ubicacion+' · '+t.placa+' / '+t.identificacionConductor+' — '+t.motivo,'restr')));});show('resultado',false);show('consultaVacia',false);show('restrCard',true);}catch(error){msg('rutaMsg',error.message,'err');}finally{busy('btnRestr',false);}};
+function revisarArchivo(){var file=$('excelFile').files[0];$('excelFile').setCustomValidity('');if(!file){show('archivoInfo',false);return false;}var error=!/\.(xlsx|xls)$/i.test(file.name)?'Selecciona un archivo Excel .xlsx o .xls.':file.size>10*1024*1024?'El archivo supera los 10 MB permitidos.':file.size===0?'El archivo está vacío.':null;if(error){msg('cargueMsg',error,'err');$('excelFile').setCustomValidity(error);show('archivoInfo',false);return false;}msg('cargueMsg','');$('archivoInfo').textContent='✓ '+file.name+' · '+(file.size<1024*1024?(file.size/1024).toFixed(1)+' KB':(file.size/1024/1024).toFixed(2)+' MB')+' · Listo para importar';show('archivoInfo',true);return true;}
+$('excelFile').addEventListener('change',revisarArchivo);['dragenter','dragover'].forEach(type=>$('dropZone').addEventListener(type,e=>{e.preventDefault();$('dropZone').classList.add('dragover');}));['dragleave','drop'].forEach(type=>$('dropZone').addEventListener(type,e=>{e.preventDefault();$('dropZone').classList.remove('dragover');}));$('dropZone').addEventListener('drop',e=>{if($('excelFile').disabled)return;if(e.dataTransfer.files.length!==1){msg('cargueMsg','Selecciona un solo archivo por importación.','err');return;}$('excelFile').files=e.dataTransfer.files;revisarArchivo();});
+function pasos(a,b,c){['step1','step2','step3'].forEach((id,i)=>$(id).className='step-box '+[a,b,c][i]);}
+function pintarResumenCargue(d){$('cargueChips').textContent='';var labels={PROCESADO:'Agregadas',ERROR:'Por corregir',VALIDADO:'Validadas',CARGADO:'Pendientes'};Object.entries(d.porEstado||{}).forEach(([state,count])=>{if(count)$('cargueChips').append(el('span',count+' '+(labels[state]||state).toLowerCase(),'chip'));});$('resultadoId').textContent='ID '+d.idCargue;show('resultadoId',true);$('resumenTexto').textContent=d.totalRegistros+' filas en total. Revisa el detalle antes de volver a importar una fila rechazada.';}
+function pintarRegistros(registros){$('cargueFilas').textContent='';show('cargueVacio',false);show('tablaCargue',true);var labels={PROCESADO:'Agregada',ERROR:'Por corregir',VALIDADO:'Validada',CARGADO:'Pendiente'};registros.forEach(r=>{var tr=el('tr');tr.append(el('td',(r.codigoRuta||'Sin ruta')+' / '+(r.orden||'0')),el('td',r.ubicacion||'Sin ubicación'));var conductor=el('td');conductor.append(el('div',r.placa||'Sin placa'),el('small','ID '+(r.identificacionConductor||'Sin identificación')));if(r.nombreConductor)conductor.append(el('small',r.nombreConductor));var state=el('td');state.append(badge(labels[r.estado]||r.estado,r.estado==='ERROR'?'ro':r.estado==='PROCESADO'?'po':'ea'));tr.append(conductor,state,el('td',r.observacion||(r.estado==='PROCESADO'?'Trayecto agregado correctamente.':'Sin observaciones.')));$('cargueFilas').append(tr);});}
+async function cargarDetalle(id,page){var d=await api('/LaboratorioV4/trayectos/cargue/'+encodeURIComponent(id)+'?page='+(page||0)+'&size=50&sort=id,asc');cargueActual=String(id);pagina=d.pagina;totalPaginas=Math.ceil(d.totalRegistros/d.tamanoPagina);pintarResumenCargue(d);pintarRegistros(d.registros);show('paginacion',totalPaginas>1);$('paginaAnterior').disabled=pagina<=0;$('paginaSiguiente').disabled=pagina>=totalPaginas-1;$('paginaTexto').textContent='Página '+(pagina+1)+' de '+totalPaginas;return d;}
+$('uploadForm').addEventListener('submit',async e=>{e.preventDefault();if(!revisarArchivo())return;var form=new FormData();form.append('file',$('excelFile').files[0]);busy('btnImportar',true,'Importando y validando…');$('excelFile').disabled=true;pasos('active','','');msg('cargueMsg','Estamos leyendo y revisando los trayectos de tu archivo…');try{var res=await api('/LaboratorioV4/trayectos/cargue',{method:'POST',body:form});var errores=res.porEstado.ERROR||0,agregadas=res.porEstado.PROCESADO||0;pasos('success','success',agregadas?'success':'');$('idCargue').value=res.idCargue;msg('cargueMsg',agregadas+' trayectos agregados.'+(errores?' '+errores+' filas necesitan corrección. Solo vuelve a importar las filas rechazadas.':' Todas las filas se importaron correctamente.'),errores?'err':'ok');try{await cargarDetalle(res.idCargue,0);}catch(error){msg('cargueMsg','El cargue terminó. Conserva el ID '+res.idCargue+'. No se pudo recuperar su detalle: '+error.message,'err');}}catch(error){pasos('','','');msg('cargueMsg',error.message,'err');}finally{$('excelFile').disabled=false;busy('btnImportar',false);}});
+$('consultaCargueForm').addEventListener('submit',async e=>{e.preventDefault();busy('btnConsultarCargue',true,'Buscando…');msg('cargueMsg','');try{await cargarDetalle($('idCargue').value.trim(),0);msg('cargueMsg','Detalle del cargue recuperado.','ok');}catch(error){msg('cargueMsg',error.message,'err');}finally{busy('btnConsultarCargue',false);}});
+async function cambiarPagina(delta){$('paginaAnterior').disabled=true;$('paginaSiguiente').disabled=true;try{await cargarDetalle(cargueActual,pagina+delta);}catch(error){msg('cargueMsg',error.message,'err');$('paginaAnterior').disabled=pagina<=0;$('paginaSiguiente').disabled=pagina>=totalPaginas-1;}}
+$('paginaAnterior').onclick=()=>cambiarPagina(-1);$('paginaSiguiente').onclick=()=>cambiarPagina(1);
+async function descargar(ejemplo){var id=ejemplo?'btnEjemplo':'btnPlantilla';busy(id,true,'Preparando Excel…');try{var r=await fetch('/LaboratorioV4/trayectos/'+(ejemplo?'ejemplo':'plantilla'),{headers:{Authorization:token,APIkey:currentApiKey}});if(!r.ok){if(r.status===401||r.status===403)cerrarSesion('La sesión expiró. Inicia sesión de nuevo.');throw new Error('No se pudo descargar el Excel ('+r.status+').');}var blob=await r.blob();var url=URL.createObjectURL(blob);var a=el('a');a.href=url;a.download=(ejemplo?'Ejemplo':'Plantilla')+'_Cargue_Trayectos.xlsx';document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){msg('cargueMsg',error.message,'err');}finally{busy(id,false);}}
+$('btnPlantilla').onclick=()=>descargar(false);$('btnEjemplo').onclick=()=>descargar(true);
 </script>
 </body>
 </html>

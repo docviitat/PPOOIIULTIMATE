@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** Entrega 3: consulta de rutas y trayectos. Todos los servicios requieren token. */
 @RestController
 @RequestMapping("/LaboratorioV3")
-@Tag(name = "rutas-trayectos", description = "Consulta de rutas y trayectos (Entrega 3)")
+@Tag(name = "03. Rutas y trayectos", description = "Consulta de rutas y trayectos (Entrega 3)")
 @SecurityRequirement(name = "bearerAuth")
 public class RutaController {
 

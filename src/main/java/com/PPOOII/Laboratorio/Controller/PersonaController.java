@@ -31,8 +31,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/LaboratorioV1")
-@Tag(name = "persona-controller", description = "CRUD y búsquedas de personas")
+@RequestMapping({"/LaboratorioV1", "/LaboratorioV2"})
+@Tag(name = "02. Personas", description = "Entrega 2: POST, GET y PUT de personas; usuario automático para ADMINISTRATIVO. Se conserva /LaboratorioV1 por compatibilidad.")
 @SecurityRequirement(name = "bearerAuth")
 public class PersonaController {
 	
@@ -94,7 +94,8 @@ public class PersonaController {
 	// ---GET---
 	@Operation(summary = "Busca una persona por su id.")
 	@ApiResponses(value = {
-		@ApiResponse(responseCode = "200", description = "Persona encontrada (null si no existe)",
+		@ApiResponse(responseCode = "404", description = "La persona no existe", content = @Content),
+		@ApiResponse(responseCode = "200", description = "Persona encontrada",
 			content = @Content(mediaType = "application/json", schema = @Schema(implementation = Persona.class))),
 		@ApiResponse(responseCode = "403", description = "Token ausente o inválido", content = @Content) })
 	@GetMapping("/persona/id/{id}")

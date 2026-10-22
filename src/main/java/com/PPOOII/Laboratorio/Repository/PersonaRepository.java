@@ -21,6 +21,9 @@ import com.PPOOII.Laboratorio.Entities.Usuario;
 @org.springframework.data.rest.core.annotation.RepositoryRestResource(exported = false)
 public interface PersonaRepository extends JpaRepository<Persona, Integer>, CrudRepository<Persona, Integer>{
 	
+    @Query(value="SELECT COUNT(*) FROM vehiculo_conductor WHERE persona_id=:id",nativeQuery=true)
+    long asociacionesConductor(@Param("id") int id);
+
 	//Hay Métodos que JPA ya los tiene desarrollados, se pueden crear para tener
 	//una manipulación más especifica a la hora de usarlos en el service	
 

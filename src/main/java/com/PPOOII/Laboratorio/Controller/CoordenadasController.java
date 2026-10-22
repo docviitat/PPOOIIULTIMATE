@@ -25,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
 @RequestMapping("/LaboratorioV3")
-@Tag(name = "coordenadas-controller", description = "Consulta de coordenadas obtenidas con la API de Google Maps")
+@Tag(name = "coordenadas-controller", description = "Consulta de coordenadas obtenidas con la API de Nominatim / OpenStreetMap")
 @SecurityRequirement(name = "bearerAuth")
 public class CoordenadasController {
 
@@ -37,7 +37,7 @@ public class CoordenadasController {
 	// ==========MÉTODOS HTTP====================
 	// MÉTODO GET
 	@Operation(summary = "Se obtienen las coordenadas de las personas (paginado).",
-			description = "Las coordenadas (latitud y longitud) se calculan con la integración con la API de Google Maps "
+			description = "Las coordenadas (latitud y longitud) se calculan con la integración con la API de Nominatim / OpenStreetMap "
 					+ "mediante una tarea programada y se almacenan en base de datos.")
 	@ApiResponses(value = { 
 	  @ApiResponse(responseCode = "200", description = "Coordenadas encontradas", 

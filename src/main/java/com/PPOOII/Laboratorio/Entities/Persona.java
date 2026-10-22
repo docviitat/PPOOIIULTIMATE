@@ -22,7 +22,7 @@ public class Persona implements Serializable {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Id
 	@Column(name = "id")
-	@Schema(description = "Identificador de la persona (autogenerado)", example = "1", accessMode = Schema.AccessMode.READ_ONLY)
+	@Schema(description = "Identificador: se genera en POST y se requiere en PUT", example = "1")
 	public int id;
 
 	@Column(name = "identificacion")

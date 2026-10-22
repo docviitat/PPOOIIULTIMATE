@@ -48,8 +48,18 @@ public class DocumentoRepository {
 	}
 
 	public int actualizar(DocumentoDTO d) {
-		return jdbc.update("UPDATE documentos SET codigo_documento=?, nombre_documento=?, tipos_vehiculo=?, obligatoriedad=?, descripcion=? WHERE id_documento=?",
+		int actualizados = jdbc.update("UPDATE documentos SET codigo_documento=?, nombre_documento=?, tipos_vehiculo=?, obligatoriedad=?, descripcion=? WHERE id_documento=?",
 				d.codigoDocumento, d.nombreDocumento, d.tiposVehiculo, d.obligatoriedad, d.descripcion, d.idDocumento);
+		jdbc.update("UPDATE vehiculo_documento SET tipo_documento=? WHERE id_documento=?", d.codigoDocumento, d.idDocumento);
+		return actualizados;
+	}
+
+	public boolean tieneVehiculosIncompatibles(int id, String tipos) {
+		Integer n = jdbc.queryForObject("SELECT COUNT(*) FROM vehiculo_documento vd "
+				+ "JOIN vehiculos v ON v.id_vehiculo=vd.id_vehiculo WHERE vd.id_documento=? "
+				+ "AND ? <> 'AM' AND ((v.tipo_vehiculo='Automovil' AND ? <> 'A') "
+				+ "OR (v.tipo_vehiculo='Motocicleta' AND ? <> 'M'))", Integer.class, id, tipos, tipos, tipos);
+		return n != null && n > 0;
 	}
 
 	public int eliminar(int id) {

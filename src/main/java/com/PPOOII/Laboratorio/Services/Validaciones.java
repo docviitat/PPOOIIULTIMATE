@@ -36,16 +36,17 @@ public final class Validaciones {
 
 	/** Decodifica un PDF en BASE64 (acepta prefijo data:...;base64,) y verifica la firma %PDF. */
 	public static byte[] decodificarPdf(String base64) {
+		if (vacio(base64)) throw error(HttpStatus.BAD_REQUEST,"El archivo PDF es obligatorio.");
 		String s = base64.trim();
 		int c = s.indexOf(',');
 		if (s.startsWith("data:") && c > 0) s = s.substring(c + 1);
 		byte[] b;
 		try {
-			b = Base64.getMimeDecoder().decode(s);
+			b = Base64.getDecoder().decode(s.replaceAll("\\s", ""));
 		} catch (IllegalArgumentException e) {
 			throw error(HttpStatus.BAD_REQUEST, "El archivo no es un BASE64 válido.");
 		}
-		if (b.length < 5 || b[0] != '%' || b[1] != 'P' || b[2] != 'D' || b[3] != 'F') {
+		if (b.length < 5 || b[0] != '%' || b[1] != 'P' || b[2] != 'D' || b[3] != 'F' || b[4] != '-') {
 			throw error(HttpStatus.BAD_REQUEST, "El archivo debe ser un PDF (en BASE64).");
 		}
 		return b;

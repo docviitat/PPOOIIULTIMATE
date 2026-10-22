@@ -147,6 +147,10 @@ public class VehiculoRepository {
 		return l.isEmpty() ? null : l.get(0);
 	}
 
+	public void cambiarEstadoDocumento(long idRelacion, String estado) {
+		jdbc.update("UPDATE vehiculo_documento SET estado_documento=? WHERE id=?", estado, idRelacion);
+	}
+
 	public void insertarDocumento(int idVehiculo, int idDocumento, String codigo, String numero, LocalDate exp, LocalDate ven, byte[] pdf, String estado) {
 		jdbc.update("INSERT INTO vehiculo_documento (id_vehiculo, id_documento, tipo_documento, numero_documento, fecha_expedicion, fecha_vencimiento, documento_pdf, estado_documento) "
 				+ "VALUES (?,?,?,?,?,?,?,?)", idVehiculo, idDocumento, codigo, numero, Date.valueOf(exp), Date.valueOf(ven), pdf, estado);

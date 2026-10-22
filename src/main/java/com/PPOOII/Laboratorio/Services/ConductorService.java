@@ -85,7 +85,7 @@ public class ConductorService {
 		Map<String, Map<String, Object>> porId = new LinkedHashMap<>();
 		jdbc.query("SELECT p.identificacion, CONCAT(p.nombres, ' ', p.apellidos) AS nombre, v.placa FROM persona p "
 				+ "JOIN vehiculo_conductor vc ON vc.persona_id = p.id JOIN vehiculos v ON v.id_vehiculo = vc.vehiculo_id "
-				+ "WHERE p.tipo_persona = 'C' AND vc.estado = 'PO' ORDER BY p.identificacion, v.placa", rs -> {
+				+ "WHERE p.tipo_persona = 'C' AND vc.estado = 'PO' AND (p.fecha_vigencia_licencia IS NULL OR p.fecha_vigencia_licencia >= CURDATE()) ORDER BY p.identificacion, v.placa", rs -> {
 					String id = rs.getString("identificacion");
 					Map<String, Object> m = porId.get(id);
 					if (m == null) {
@@ -107,7 +107,7 @@ public class ConductorService {
 		return jdbc.query("SELECT tipo_persona, COUNT(*) AS total FROM persona GROUP BY tipo_persona ORDER BY tipo_persona", (rs, i) -> {
 			Map<String, Object> m = new LinkedHashMap<>();
 			String t = rs.getString("tipo_persona");
-			m.put("tipoPersona", "C".equals(t) ? "CONDUCTOR" : "A".equals(t) ? "ADMINISTRATIVO" : t);
+			m.put("tipoPersona", "C".equals(t) ? "CONDUCTOR" : "A".equals(t) ? "ADMINISTRATIVO" : "SIN_CLASIFICAR");
 			m.put("total", rs.getLong("total"));
 			return m;
 		});

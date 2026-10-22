@@ -69,6 +69,16 @@ public class TrayectoTmp implements Serializable {
 	@Schema(description = "Identificador del cargue: año, mes, día, hora y minutos (yyyyMMddHHmm)", example = "202610141530")
 	private Long idCargue;
 
+    @Column(name="nombre_conductor")
+    @Schema(description="Nombre del conductor tal como viene en Excel (opcional)")
+    public String nombreConductor;
+    @Column(name="edad_conductor")
+    @Schema(description="Edad del conductor tal como viene en Excel (opcional)")
+    public String edadConductor;
+    @Column(name="login_registro")
+    @Schema(description="Usuario que realizó el cargue")
+    public String loginRegistro;
+
 	public TrayectoTmp() {}
 
 	public Long getId() { return id; }

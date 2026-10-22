@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /** Entrega 2: servicios públicos (NO requieren token). */
 @RestController
 @RequestMapping("/LaboratorioV2/publico")
-@Tag(name = "servicios-publicos", description = "Servicios públicos que no requieren token (Entrega 2)")
+@Tag(name = "02. Consultas públicas", description = "Servicios públicos que no requieren token (Entrega 2)")
 public class PublicoController {
 
 	@Autowired @Qualifier("VehiculoService") private VehiculoService vehiculos;
